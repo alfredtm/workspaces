@@ -16,7 +16,9 @@ mkdir -p "${WS_ROOT:=/tmp/ws}"
 # GitHub CLI for the guided sign-in (prod image ships it; the lab container doesn't)
 if ! command -v gh >/dev/null 2>&1; then
   GHV=2.63.2; ARCH=$(uname -m | sed 's/aarch64/arm64/; s/x86_64/amd64/')
-  curl -sL "https://github.com/cli/cli/releases/download/v${GHV}/gh_${GHV}_linux_${ARCH}.tar.gz" | tar -xz -C /tmp && cp "/tmp/gh_${GHV}_linux_${ARCH}/bin/gh" /usr/local/bin/gh || true
+  if curl -sL "https://github.com/cli/cli/releases/download/v${GHV}/gh_${GHV}_linux_${ARCH}.tar.gz" | tar -xz -C /tmp; then
+    cp "/tmp/gh_${GHV}_linux_${ARCH}/bin/gh" /usr/local/bin/gh || true
+  fi
 fi
 # Claude CLI for the guided Claude sign-in (prod image pins it via versions.txt)
 if ! command -v claude >/dev/null 2>&1; then

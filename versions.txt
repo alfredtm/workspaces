@@ -1,6 +1,6 @@
 # Tooling versions for the images (KEY=VALUE), read by the CI workflows as
 # build args and toolchain versions. Bump here and the images rebuild.
-GO_VERSION=1.26.6
+GO_VERSION=1.26.9
 NODE_VERSION=24
 CLAUDE_CODE_VERSION=2.1.278
 # OpenCode CLI (npm package opencode-ai), installed in the workspace image.
