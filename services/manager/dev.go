@@ -51,12 +51,14 @@ func newDevFakeClients(namespace, username string, readyDelay time.Duration) kub
 		}
 	}
 
-	running := "ws-" + username + "-demo"
-	paused := "ws-" + username + "-paused"
+	running := "ws-" + username + "-pomodoro"
+	paused := "ws-" + username + "-api-sandbox"
+	paused2 := "ws-" + username + "-data-notebook"
 
 	k8s := k8sfake.NewSimpleClientset(
 		deployment(running, 1, 1),
 		deployment(paused, 0, 0),
+		deployment(paused2, 0, 0),
 		&corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      running + "-6c9f7d4b8-x2m4q",

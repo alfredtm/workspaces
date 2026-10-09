@@ -411,7 +411,7 @@ func (c *config) loginHandler(w http.ResponseWriter, r *http.Request) {
 		// Local-dev bypass (see DEV_USER in main): mint a session directly.
 		// cookieSecure is false here because this only ever runs on
 		// plain-http localhost (main refuses any other PUBLIC_HOST).
-		cookieVal := c.signSession(c.devUser, "Dev User", time.Now().Add(8*time.Hour))
+		cookieVal := c.signSession(c.devUser, getenv("DEV_NAME", "Dev User"), time.Now().Add(8*time.Hour))
 		slog.Warn("dev login", "identity", c.devUser, "derived_username", (&session{userUPN: c.devUser}).username())
 		http.SetCookie(w, &http.Cookie{
 			Name:     "mw_session",

@@ -69,11 +69,11 @@ func TestDevFakeDeploymentBecomesReady(t *testing.T) {
 	}
 	waitReady(1)
 
-	// Seeded fixtures keep their state: the demo workspace is Ready from the
-	// start and the paused one stays at 0.
-	demo, err := deps.Get(ctx, "ws-dev-demo", metav1.GetOptions{})
-	if err != nil || demo.Status.ReadyReplicas != 1 {
-		t.Errorf("seeded demo workspace: err=%v ready=%v, want ready 1", err, demo.Status.ReadyReplicas)
+	// Seeded fixtures keep their state: the running workspace is Ready from
+	// the start and the stopped ones stay at 0.
+	running, err := deps.Get(ctx, "ws-dev-pomodoro", metav1.GetOptions{})
+	if err != nil || running.Status.ReadyReplicas != 1 {
+		t.Errorf("seeded running workspace: err=%v ready=%v, want ready 1", err, running.Status.ReadyReplicas)
 	}
 }
 

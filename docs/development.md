@@ -121,4 +121,4 @@ hand.
 | `START_TIMEOUT` | no | `10m`; `0` disables |
 | `IDLE_WARN_DAYS`, `IDLE_DELETE_DAYS` | no | `7`, `14`; `0` disables |
 | `LISTEN` | no | `:8080` |
-| `DEV_USER`, `DEV_FAKE`, `KUBECONFIG` | dev only | See above |
+| `DEV_USER`, `DEV_NAME`, `DEV_FAKE`, `KUBECONFIG` | dev only | See above (`DEV_NAME` is the display name, default `Dev User`) |
