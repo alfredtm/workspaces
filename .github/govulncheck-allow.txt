@@ -1,0 +1,7 @@
+# Allowlisted govulncheck OSV IDs, one per line. Blank lines and lines
+# starting with # are ignored. Every entry needs a reason above it, and an
+# entry should be removed as soon as the dependency can be bumped instead.
+#
+# The ci workflow runs the symbol scan (`govulncheck ./...`), so a finding
+# here means our code actually reaches the vulnerable function. Prefer fixing
+# to allowlisting.

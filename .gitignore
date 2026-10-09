@@ -1,0 +1,9 @@
+.DS_Store
+*.env
+*.local
+# Registry credentials never belong in the repo.
+.npmrc
+**/node_modules/
+services/manager/manager
+services/authproxy/authproxy
+services/port-router/port-router

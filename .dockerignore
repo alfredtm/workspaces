@@ -1,0 +1,40 @@
+# The workspace editor layer (images/workspace/Dockerfile) uses the repo root
+# as build context, so this file decides what gets uploaded to BuildKit.
+# (Go services are built with ko; the base image uses its own directory.)
+#
+# Do NOT exclude anything a Dockerfile COPY needs: services/shell (agent),
+# services/pi, images/workspace/**, and ui/theia/dist-image/theia.tar.gz
+# (from images/workspace/build-theia.sh). Re-check the COPY lines first.
+
+.git/
+.github/
+.DS_Store
+*.env
+*.local
+
+# Docs and manifests no image copies (dotfiles/*.md ARE copied; do not use
+# **/*.md).
+README.md
+CONTRIBUTING.md
+CLAUDE.md
+docs/
+charts/
+services/shell/*.md
+services/pi/*.md
+services/pi/test/
+services/shell/test/
+
+# Go: local binaries and tests.
+services/manager/manager
+services/authproxy/authproxy
+services/port-router/port-router
+**/*_test.go
+
+# Node: dependencies are installed inside the build stages from lockfiles.
+**/node_modules/
+ui/portal/dist/
+ui/portal/*.tsbuildinfo
+
+# Theia is built outside BuildKit; only the resulting tarball enters.
+ui/theia/**
+!ui/theia/dist-image/

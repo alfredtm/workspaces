@@ -1,0 +1,176 @@
+# Checks for pull requests and main, one job per component. Go and Node
+# versions come from versions.txt, so CI tests with the toolchain the images
+# ship (the editor is the exception: Theia's native modules target Node 20).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [services/manager, services/authproxy, services/port-router]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Load tooling versions
+        run: grep -E '^[A-Z_]+=' versions.txt >> "$GITHUB_ENV"
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache-dependency-path: ${{ matrix.module }}/go.mod
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@ba0d7d2ec06a0ea1cb5fa41b2e4a3ab91d21278a # v9.3.0
+        with:
+          version: v2.13.2
+          working-directory: ${{ matrix.module }}
+          args: --timeout=5m
+      - name: build, vet, test
+        working-directory: ${{ matrix.module }}
+        run: |
+          go build ./...
+          go vet ./...
+          go test -race ./...
+      - name: govulncheck
+        # Only vulnerabilities in functions the code actually reaches fail the
+        # job; .github/govulncheck-allow.txt lists reviewed advisories.
+        working-directory: ${{ matrix.module }}
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@v1.6.0
+          set +e
+          govulncheck -format json ./... > /tmp/govulncheck.json
+          code=$?
+          set -e
+          if [ "$code" -ne 0 ] && [ "$code" -ne 3 ]; then
+            echo "govulncheck failed to run (exit $code)" >&2
+            cat /tmp/govulncheck.json >&2
+            exit "$code"
+          fi
+          found="$(jq -r 'select(.finding) | select(.finding.trace | length > 1) | .finding.osv' /tmp/govulncheck.json | sort -u)"
+          [ -z "$found" ] && { echo "no reachable vulnerabilities"; exit 0; }
+          allowed="$(grep -v -e '^\s*#' -e '^\s*$' "$GITHUB_WORKSPACE/.github/govulncheck-allow.txt" | sed 's/\s*$//' | sort -u)"
+          remaining="$(comm -23 <(echo "$found") <(echo "$allowed"))"
+          if [ -n "$remaining" ]; then
+            echo "reachable advisories not in .github/govulncheck-allow.txt:" >&2
+            echo "$remaining" >&2
+            govulncheck ./... >&2 || true
+            exit 1
+          fi
+          echo "only allowlisted advisories: $found"
+
+  agent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Load tooling versions
+        run: grep -E '^[A-Z_]+=' versions.txt >> "$GITHUB_ENV"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: services/shell/package-lock.json
+      - name: install and test
+        working-directory: services/shell
+        run: |
+          npm ci --no-audit --no-fund
+          node --test
+
+  pi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Load tooling versions
+        run: grep -E '^[A-Z_]+=' versions.txt >> "$GITHUB_ENV"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: services/pi/package-lock.json
+      - name: install and test
+        working-directory: services/pi
+        run: |
+          npm ci --no-audit --no-fund
+          for f in *.mjs; do node --check "$f"; done
+          node --test
+
+  portal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Load tooling versions
+        run: grep -E '^[A-Z_]+=' versions.txt >> "$GITHUB_ENV"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ui/portal/package-lock.json
+      - name: install, typecheck, build
+        working-directory: ui/portal
+        run: |
+          npm ci --no-audit --no-fund
+          npx tsc --noEmit -p .
+          npm run build
+
+  editor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: ui/theia/package-lock.json
+      # Typecheck only; the full Theia build runs in images.yml.
+      - name: install and typecheck
+        working-directory: ui/theia
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npx tsc -p workspace-theia --noEmit
+
+  chart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
+      - name: lint and render both routing modes
+        run: |
+          set -euo pipefail
+          args=(--set oidc.issuer=https://id.example.com --set oidc.clientId=ci)
+          helm lint charts/workspaces "${args[@]}"
+          helm template t charts/workspaces "${args[@]}" > /dev/null
+          helm template t charts/workspaces "${args[@]}" \
+            --set routing.mode=gateway --set routing.gateway.name=gw > /dev/null
+          helm template t charts/workspaces "${args[@]}" \
+            --set 'inference.providers[0].baseUrl=https://api.example.com/v1' \
+            --set 'inference.providers[0].models=m1' > /dev/null
+
+  repo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: actionlint
+        run: |
+          curl -sfL https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o /tmp/actionlint.tar.gz
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  /tmp/actionlint.tar.gz" | sha256sum -c -
+          tar -xz -C /usr/local/bin -f /tmp/actionlint.tar.gz actionlint
+          actionlint
+      - name: shellcheck
+        run: git ls-files -z '*.sh' 'images/workspace/entrypoint.sh' | xargs -0 shellcheck

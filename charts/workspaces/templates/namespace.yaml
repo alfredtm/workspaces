@@ -1,0 +1,12 @@
+{{- if .Values.workspaceNamespace.create }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ include "workspaces.workspaceNamespace" . }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+  annotations:
+    # Workspaces hold people's work: don't delete the namespace (and every
+    # disk in it) on `helm uninstall`.
+    helm.sh/resource-policy: keep
+{{- end }}

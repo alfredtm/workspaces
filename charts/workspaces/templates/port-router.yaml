@@ -1,0 +1,67 @@
+# port-router: backend for every *.<domain> host. <user>-<name>.<domain>
+# goes to that workspace, <port>--<user>-<name>.<domain> to a port inside
+# it. It has no auth of its own: the authproxy in each workspace checks the
+# session cookie and that the visitor owns the workspace.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: port-router
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+    app: port-router
+spec:
+  replicas: {{ .Values.portRouter.replicas }}
+  selector:
+    matchLabels:
+      app: port-router
+  template:
+    metadata:
+      labels:
+        app: port-router
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: port-router
+          image: {{ include "workspaces.image" (list . .Values.portRouter.image "/port-router") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: WORKSPACE_NAMESPACE
+              value: {{ include "workspaces.workspaceNamespace" . | quote }}
+            # Never proxied, even if a request for it reaches the router.
+            - name: PUBLIC_HOST
+              value: {{ include "workspaces.portalHost" . | quote }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml .Values.portRouter.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: port-router
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: port-router
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

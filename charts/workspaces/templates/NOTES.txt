@@ -1,0 +1,18 @@
+Workspaces is installing.
+
+  Portal:      https://{{ include "workspaces.portalHost" . }}
+  Workspaces:  https://<user>-<name>.{{ .Values.domain }}
+  Ports:       https://<port>--<user>-<name>.{{ .Values.domain }}
+
+Checklist:
+  1. DNS: {{ include "workspaces.portalHost" . }} and *.{{ .Values.domain }} point at your {{ .Values.routing.mode }}.
+  2. TLS: a certificate for *.{{ .Values.domain }} (it covers the portal too).
+  3. Your identity provider allows the redirect URI
+       https://{{ include "workspaces.portalHost" . }}/auth/callback
+  4. The editor runs over WebSockets: if your ingress controller has short
+     read timeouts (ingress-nginx defaults to 60s), raise them, e.g.
+       nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+       nginx.ingress.kubernetes.io/proxy-body-size: "0"
+
+Workspaces live in namespace {{ include "workspaces.workspaceNamespace" . }}.

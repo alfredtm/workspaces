@@ -1,0 +1,38 @@
+{{- if .Values.prepull.enabled }}
+# Keeps the workspace image's layers on every node, so a workspace start is
+# a metadata check instead of a multi-GB pull. After publishing a new image:
+#   kubectl -n {{ .Release.Namespace }} rollout restart ds/workspace-prepull
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: workspace-prepull
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: workspace-prepull
+  template:
+    metadata:
+      labels:
+        app: workspace-prepull
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: prepull
+          image: {{ include "workspaces.image" (list . .Values.workspace.image "") }}
+          imagePullPolicy: Always
+          command: ["sleep", "infinity"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: { cpu: 1m, memory: 16Mi }
+            limits: { cpu: 50m, memory: 64Mi }
+{{- end }}

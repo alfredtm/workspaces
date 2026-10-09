@@ -1,0 +1,19 @@
+# build output (theia build / tsc)
+node_modules/
+lib/
+src-gen/
+gen-esbuild.*.mjs
+# (esbuild.mjs is committed: browser-only watch, see its header)
+workspace-theia/lib/
+# third-party plugins are fetched + unpacked at image build (see Dockerfile / lab.sh):
+# claude-code + material-icon-theme by fetch-plugins.sh, the rest by `theia download:plugins`
+# from package.json "theiaPlugins". Only our own theme is source.
+plugins/*
+!plugins/workspaces-theme/
+# lab state
+state/
+ws/
+.theia/
+core
+# images/workspace/build-theia.sh output (the tarball the workspace Dockerfile ADDs)
+dist-image/

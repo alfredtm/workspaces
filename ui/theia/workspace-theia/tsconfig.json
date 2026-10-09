@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2019", "module": "commonjs", "moduleResolution": "node",
+    "lib": ["ES2019", "DOM"], "jsx": "react", "esModuleInterop": true,
+    "experimentalDecorators": true, "emitDecoratorMetadata": true,
+    "skipLibCheck": true, "strict": false, "noImplicitAny": false,
+    "outDir": "lib", "rootDir": "src", "sourceMap": false, "declaration": false,
+    "resolveJsonModule": true
+  },
+  "include": ["src"]
+}

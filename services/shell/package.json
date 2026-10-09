@@ -1,0 +1,16 @@
+{
+  "name": "workspace-agent",
+  "private": true,
+  "version": "0.0.1",
+  "description": "The workspace agent: the Theia editor's small backend in each workspace pod (ports, preview, files, env, guided sign-ins).",
+  "license": "MIT",
+  "main": "agent.js",
+  "scripts": {
+    "start": "node agent.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "node-pty": "^1.0.0",
+    "ws": "^8.18.0"
+  }
+}

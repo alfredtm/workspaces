@@ -1,0 +1,697 @@
+:root { --ws-navy:#0b0f1e; --ws-panel:#10152b; --ws-panel2:#141a33; --ws-border:#252c4a;
+        --ws-text:#eceef6; --ws-muted:#9aa1bd; --ws-ok:#3fd68f; --ws-pink:#ec4899; --ws-purple:#a855f7; }
+/* ---- chrome removal (Theia-native, shipped by the extension) ---- */
+#theia-top-panel, #theia-statusBar,
+.theia-sidepanel-toolbar, .theia-sidepanel-title,
+.theia-notification-list-container { display: none !important; }
+#theia-app-shell, .theia-ApplicationShell { top: 46px !important; height: calc(100% - 46px) !important; }
+#theia-left-content-panel { left: 0 !important; }
+/* ---- brand bar ---- */
+#workspace-brand-bar { position: fixed; top: 0; left: 0; right: 0; height: 46px; z-index: 2147483647;
+  display: flex; align-items: center; padding: 0 18px; background: rgba(16,21,43,.92);
+  border-bottom: 1px solid var(--ws-border); color: var(--ws-text);
+  font: 700 17px/1 Satoshi, system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: -.02em; }
+#workspace-brand-bar .g { background: linear-gradient(90deg, var(--ws-pink), var(--ws-purple));
+  -webkit-background-clip: text; background-clip: text; color: transparent; margin-left: 5px; }
+/* ---- shell surfaces ---- */
+body, #theia-app-shell, #theia-left-right-split-panel, #theia-left-content-panel, #theia-right-content-panel,
+#theia-main-content-panel, .theia-side-panel, .theia-view-container, .theia-view-container-part,
+.theia-TreeContainer, .theia-Tree, .theia-ExplorerContainer { background: var(--ws-navy) !important; }
+.theia-view-container-part-title, .theia-header { background: var(--ws-navy) !important; color: var(--ws-muted) !important;
+  font: 600 11px/1 Satoshi, system-ui !important; letter-spacing: .09em; text-transform: uppercase; }
+.theia-TreeNode:hover { background: rgba(168,85,247,.12) !important; }
+.theia-TreeNode.theia-mod-selected { background: rgba(168,85,247,.22) !important; }
+/* ---- Running / Settings sections ---- */
+.workspace-running, .workspace-settings { padding: 4px 8px 8px; color: var(--ws-text); font: 13px/1.5 Satoshi, system-ui, sans-serif; }
+.ws-empty, .ws-muted { color: var(--ws-muted); } .ws-small { font-size: 12px; } .ws-ok { color: var(--ws-ok); }
+.ws-row { display: flex; align-items: center; gap: 7px; width: 100%; text-align: left; border: 0; background: none;
+  color: var(--ws-text); border-radius: 6px; padding: 5px 8px; font-size: 13px; cursor: pointer; text-decoration: none; }
+.ws-row:hover { background: rgba(168,85,247,.12); }
+.ws-acct { flex-direction: column; align-items: flex-start; gap: 1px; } .ws-acct small { font-size: 12px; }
+/* pulse rides on transform/opacity of a pseudo-element (compositor only) — animating box-shadow
+   forced ~60 style recalcs/s on the whole document while idle */
+.ws-dot { position: relative; width: 8px; height: 8px; border-radius: 999px; background: var(--ws-ok); flex: none; }
+.ws-dot::after { content: ""; position: absolute; inset: 0; border-radius: inherit; background: rgba(63,214,143,.5);
+  animation: ws-pulse 2s ease-in-out infinite; will-change: transform, opacity; }
+@keyframes ws-pulse { 0% { transform: scale(1); opacity: .6; } 50%,100% { transform: scale(2.5); opacity: 0; } }
+.ws-label { flex: 1; } .ws-ext { color: var(--ws-muted); margin-left: auto; }
+.workspace-settings hr { border: 0; border-top: 1px solid var(--ws-border); margin: 6px 0; }
+.ws-flow { margin-top: 8px; padding: 12px; border: 1px solid var(--ws-border); border-radius: 12px; background: var(--ws-panel); }
+.ws-flow-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.ws-form { display: flex; flex-direction: column; gap: 8px; }
+.ws-flow input, .ws-envrow input { padding: 8px 10px; border-radius: 9px; border: 1px solid var(--ws-border);
+  background: var(--ws-panel2); color: var(--ws-text); font: inherit; font-size: 13px; width: 100%; }
+.ws-flow input:focus, .ws-envrow input:focus { outline: none; border-color: var(--ws-purple); box-shadow: 0 0 0 3px rgba(168,85,247,.25); }
+.ws-primary { display: inline-block; border: 0; border-radius: 10px; padding: 8px 14px; font-weight: 700; color: #fff;
+  background: linear-gradient(90deg, var(--ws-pink), var(--ws-purple)); box-shadow: 0 4px 18px rgba(236,72,153,.35); cursor: pointer; text-decoration: none; text-align: center; }
+.ws-quiet { border: 0; background: none; color: var(--ws-muted); cursor: pointer; } .ws-quiet:hover { color: var(--ws-text); }
+.ws-mini { color: var(--ws-muted); font-size: 12px; } .ws-mini:hover { color: var(--ws-text); }
+.ws-code { font: 700 26px/1.3 "JetBrains Mono", ui-monospace, monospace; letter-spacing: 3px; background: var(--ws-panel2);
+  border: 1px solid var(--ws-border); border-radius: 12px; padding: 10px 14px; display: inline-block; user-select: all; margin: 6px 0 10px; }
+.ws-done { color: var(--ws-ok); font-weight: 600; } .ws-fail { color: #ff8080; margin-bottom: 8px; }
+.ws-envrow { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+.ws-envk { width: 40% !important; font-family: "JetBrains Mono", monospace; text-transform: uppercase; }
+.ws-add { width: 100%; margin-top: 4px; border: 1px dashed var(--ws-border); background: none; color: var(--ws-muted); padding: 8px; border-radius: 9px; cursor: pointer; }
+.ws-add:hover { border-color: var(--ws-purple); color: var(--ws-text); }
+.ws-envfoot { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+/* stray toolbars / bottom menu / notifications */
+.lm-TabBar-toolbar, .p-TabBar-toolbar, .theia-sidebar-bottom-menu, .theia-sidebar-menu,
+.theia-notifications-container, .theia-notification-list, .theia-notification-list-container { display: none !important; }
+/* ---- polish ---- */
+.lm-Widget:focus, .lm-Widget:focus-visible, .theia-side-panel .lm-Widget:focus,
+.lm-DockPanel-widget:focus, .theia-view-container:focus, .theia-view-container-part:focus,
+.theia-webview:focus, .webview-widget:focus { outline: none !important; box-shadow: none !important; }
+.lm-SplitPanel-handle, .p-SplitPanel-handle { background: transparent !important; }
+.lm-SplitPanel-handle:hover, .p-SplitPanel-handle:hover { background: rgba(168,85,247,.35) !important; }
+/* Files section: show a proper header, give the tree room to breathe */
+.theia-view-container .theia-view-container-part-title { display: flex !important; align-items: center; height: 30px;
+  padding: 12px 8px 4px 12px !important; background: var(--ws-navy) !important; color: var(--ws-muted) !important;
+  font: 600 11px/1 Satoshi, system-ui !important; letter-spacing: .09em; text-transform: uppercase; border: 0 !important; }
+.theia-view-container-part-title .theia-ExpansionToggle { color: var(--ws-muted) !important; }
+.theia-view-container-part { border-top: 1px solid var(--ws-border) !important; }
+.theia-view-container-part:first-child { border-top: 0 !important; }
+.theia-TreeContainer { padding: 2px 6px 0 6px !important; }
+.theia-TreeNode { border-radius: 6px; margin: 1px 2px; height: 26px !important; line-height: 26px !important; font-size: 13px; }
+.theia-TreeNodeSegment { color: var(--ws-text); }
+.theia-tree-node-indent .theia-indent-guide { border-color: var(--ws-border) !important; opacity: 1 !important; }
+.theia-ExpansionToggle { color: var(--ws-muted) !important; }
+#theia-left-content-panel { padding-top: 6px; }
+/* editor tabs: match shell headbar */
+.lm-TabBar.theia-tabBar-active-tab, .p-TabBar[data-orientation=horizontal] { background: var(--ws-navy) !important; }
+.lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab { border: 0 !important; border-radius: 8px 8px 0 0; margin-top: 4px; padding: 0 12px !important; }
+.lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current { background: var(--ws-panel) !important; }
+/* Claude panel: tidy its header, subtle divider */
+#theia-right-content-panel { border-left: 1px solid var(--ws-border) !important; }
+#theia-right-content-panel .theia-view-container-part-title { text-transform: none !important; letter-spacing: 0; font: 600 13px/1 Satoshi, system-ui !important; color: var(--ws-text) !important; }
+/* tighter tree gutter; no idle scrollbar rails in side parts */
+.theia-TreeContainer { padding-left: 0 !important; }
+.theia-view-container-part .ps__rail-y, .theia-view-container-part .ps__rail-x { opacity: 0 !important; }
+.theia-view-container-part:hover .ps__rail-y { opacity: .5 !important; }
+/* scrollbar rails in the left panel: invisible until hovered */
+#theia-left-content-panel .ps__rail-y, #theia-left-content-panel .ps__rail-x { opacity: 0 !important; transition: opacity .15s; }
+#theia-left-content-panel .ps--scrolling-y > .ps__rail-y { opacity: .6 !important; }
+#theia-left-content-panel .ps__thumb-y { background: rgba(154,161,189,.25) !important; width: 6px !important; }
+/* file tree border, and let the editor area collapse to zero when nothing is open */
+#theia-left-content-panel { border-right: 1px solid var(--ws-border) !important; }
+#theia-main-content-panel { min-width: 0 !important; }
+body.ws-no-editor #theia-main-content-panel { display: none !important; }
+body.ws-no-editor #theia-right-content-panel { border-left: 0 !important; }
+/* tree: hug the section header — no dead gutter before the first level */
+.theia-FileTree .theia-TreeContainer, .theia-TreeContainer { padding-left: 0 !important; }
+.theia-TreeNode { margin-left: 0 !important; }
+
+/* side panel content flush to the panel edge */
+#theia-left-content-panel > .lm-Widget:not(.lm-TabBar), #theia-left-content-panel .theia-side-panel { left: 0 !important; }
+/* activity bars: zero-size so Lumino's box layout drops the slot; nothing painted, nothing clickable */
+.lm-TabBar.theia-app-left, .p-TabBar.theia-app-left, .lm-TabBar.theia-app-right, .p-TabBar.theia-app-right {
+  width: 0 !important; min-width: 0 !important; max-width: 0 !important; flex: 0 0 0 !important;
+  overflow: hidden !important; visibility: hidden !important; pointer-events: none !important; }
+/* shell-like breathing room inside the left panel (content was flush at 0 after reclaiming the activity bar slot) */
+#theia-left-content-panel .theia-view-container-part-title { padding-left: 14px !important; }
+#theia-left-content-panel .theia-TreeContainer { padding-left: 8px !important; padding-right: 6px !important; }
+#theia-left-content-panel .workspace-running, #theia-left-content-panel .workspace-settings { padding-left: 12px !important; padding-right: 10px !important; }
+/* pad the whole part header row (chevron + title), not just the title text */
+#theia-left-content-panel .theia-view-container-part > .theia-header,
+#theia-left-content-panel .theia-view-container-part > .header,
+#theia-left-content-panel .theia-view-container-part-title { padding-left: 10px !important; }
+#theia-left-content-panel .theia-view-container-part-title .theia-ExpansionToggle,
+#theia-left-content-panel .theia-view-container-part > .theia-header > .theia-ExpansionToggle { margin-left: 0 !important; }
+/* correct selectors: parts are `.part`, the header row is `.theia-view-container-part-header` */
+#theia-left-content-panel .theia-view-container-part-header { padding-left: 10px !important; padding-right: 8px !important; height: 30px !important;
+  background: var(--ws-navy) !important; color: var(--ws-muted) !important; border: 0 !important; }
+#theia-left-content-panel .theia-view-container-part-header .label { font: 600 11px/1 Satoshi, system-ui !important; letter-spacing: .09em; text-transform: uppercase; color: var(--ws-muted) !important; }
+#theia-left-content-panel .part { border-top: 1px solid var(--ws-border) !important; }
+#theia-left-content-panel .part:first-child { border-top: 0 !important; }
+/* no focus ring on section headers (Theia draws focusBorder around the clicked header) */
+#theia-left-content-panel .theia-view-container-part-header:focus,
+#theia-left-content-panel .theia-view-container-part-header:focus-visible,
+#theia-left-content-panel .theia-view-container-part-header:focus-within,
+#theia-left-content-panel .part:focus, #theia-left-content-panel .part:focus-within,
+#theia-left-content-panel .theia-view-container:focus { outline: none !important; box-shadow: none !important; border-color: var(--ws-border) !important; }
+#theia-left-content-panel .theia-view-container-part-header.theia-mod-focus,
+#theia-left-content-panel .part.theia-mod-active > .theia-view-container-part-header { outline: none !important; }
+/* --- section behaviour: Files collapsible; Running + Settings static --- */
+#explorer-view-container--workspace-running > .theia-view-container-part-header,
+#explorer-view-container--workspace-settings > .theia-view-container-part-header { pointer-events: none !important; cursor: default !important; }
+#explorer-view-container--workspace-running > .theia-view-container-part-header .theia-ExpansionToggle,
+#explorer-view-container--workspace-settings > .theia-view-container-part-header .theia-ExpansionToggle { display: none !important; }
+#explorer-view-container--workspace-running > .theia-view-container-part-header,
+#explorer-view-container--workspace-settings > .theia-view-container-part-header { padding-left: 14px !important; }
+/* --- no Files toolbar (new file/folder/refresh/collapse/…) --- */
+#theia-left-content-panel .lm-TabBar-toolbar, #theia-left-content-panel .p-TabBar-toolbar,
+#theia-left-content-panel .theia-view-container-part-title { display: none !important; }
+/* --- hide Claude's own "Untitled" header + history/new icons --- */
+#theia-right-content-panel .theia-view-container-part-header, #theia-right-content-panel .lm-TabBar-toolbar,
+#theia-right-content-panel .p-TabBar-toolbar, #theia-right-content-panel .theia-sidepanel-toolbar,
+#theia-right-content-panel .theia-sidepanel-title { display: none !important; }
+/* ---- footer: Running + Settings pinned to the bottom of the left panel ---- */
+#workspace-footer { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; background: var(--ws-navy);
+  border-top: 1px solid var(--ws-border); display: flex; flex-direction: column; }
+#workspace-footer .workspace-running { padding: 6px 10px 4px 12px; }
+#workspace-footer .workspace-running:before { content: "Running"; display: block; font: 600 11px/1 Satoshi, system-ui; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--ws-muted); padding: 8px 0 8px 2px; }
+#workspace-footer .workspace-running:has(.ws-empty):before, #workspace-footer .workspace-running:has(.ws-empty) { display: none; }
+#workspace-footer .workspace-settings { padding: 8px 10px 10px; border-top: 1px solid var(--ws-border); position: relative; }
+.ws-settings-btn { width: 100%; display: flex; align-items: center; gap: 8px; border: 1px solid var(--ws-border); background: transparent;
+  color: var(--ws-text); border-radius: 10px; padding: 8px 14px; font: 500 14px Satoshi, system-ui; cursor: pointer; }
+.ws-settings-btn:hover { border-color: var(--ws-purple); }
+.ws-settings-btn small { margin-left: auto; font-size: 12px; }
+.ws-settings-menu { position: fixed; background: var(--ws-panel);
+  border: 1px solid var(--ws-border); border-radius: 12px; padding: 6px; box-shadow: 0 12px 40px rgba(0,0,0,.5); z-index: 30;
+  max-height: 70vh; overflow: auto; }
+/* the tree scrolls above the footer, never under it */
+#explorer-view-container--files { padding-bottom: var(--ws-footer-h, 0px) !important; box-sizing: border-box; }
+/* no gap above Files: kill the reserved side-panel toolbar strip and top padding */
+#theia-left-content-panel { padding-top: 0 !important; }
+#theia-left-content-panel .theia-sidepanel-toolbar { height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; border: 0 !important; }
+/* Theia hides a part's header when it's the only part — we want the FILES header regardless */
+#explorer-view-container--files > .theia-view-container-part-header { display: flex !important; height: 30px !important; visibility: visible !important; }
+.ws-settings-btn:focus { outline: none !important; }
+/* exact alignment: folder row = 8px pad + 22px toggle = leaf row's 30px pad; icon boxes fixed-width */
+.theia-FileTree .theia-ExpansionToggle { width: 22px !important; min-width: 22px !important; max-width: 22px !important; padding: 0 !important; margin: 0 !important; display: inline-flex !important; align-items: center; justify-content: center; }
+.theia-FileTree .theia-TreeNodeSegment.theia-file-icons-js, .theia-FileTree .theia-TreeNodeSegment .file-icon,
+.theia-FileTree .theia-TreeNode > .theia-TreeNodeSegment:not(.theia-ExpansionToggle):not(.theia-TreeNodeSegmentGrow) { width: 20px !important; min-width: 20px !important; display: inline-flex !important; justify-content: center; align-items: center; padding: 0 !important; margin: 0 2px 0 0 !important; }
+/* centre icon glyphs in their 22px box so folder and file glyphs share a visual centre */
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js,
+.theia-FileTree .theia-TreeNodeContent > .codicon { padding: 0 !important; margin: 0 !important; width: 22px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important; text-align: center !important; }
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js::before { margin: 0 auto !important; }
+/* flat tree: leaf rows don't reserve a toggle slot — file icon sits where the folder's chevron sits */
+.theia-FileTree .theia-TreeNode:not(.theia-ExpandableTreeNode) > .theia-TreeNodeContent { margin-left: -22px !important; }
+/* slightly larger icons (boxes stay 22px so alignment is unchanged) */
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js::before { font-size: 16px !important; line-height: 1 !important; }
+.theia-FileTree .theia-TreeNodeContent > .codicon:not(.theia-ExpansionToggle)::before { font-size: 17px !important; }
+/* folders: chevron only, no folder icon */
+.theia-FileTree .theia-TreeNodeContent > .codicon-folder, .theia-FileTree .theia-TreeNodeContent > .codicon-folder-opened,
+.theia-FileTree .theia-TreeNodeContent > .default-folder-icon, .theia-FileTree .theia-TreeNodeContent > .default-root-folder-icon { display: none !important; }
+/* labels share one x: chevron box (19–35) + 9 = 44; file icon box (16–38) + 6 = 44 */
+.theia-FileTree .theia-ExpansionToggle { margin-right: 9px !important; }
+/* file glyphs left-aligned in their box so different icon widths don't drift; glyph left edge = chevron left edge (19) */
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js { justify-content: flex-start !important; padding-left: 3px !important; margin-right: 6px !important; }
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js::before { margin: 0 !important; }
+/* one label x for folders and files: 44px */
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js { box-sizing: border-box !important; }   /* 16 + 22 + 6 = 44 */
+.theia-FileTree .theia-ExpandableTreeNode .theia-TreeNodeSegmentGrow { margin-left: 6px !important; } /* 38 + 6 = 44 */
+/* align file glyphs to the chevron's VISIBLE strokes (codicon chevron is centred in its 16px box): glyph left = 16 + 8 = 24 */
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js { width: 24px !important; min-width: 24px !important; padding-left: 8px !important; margin-right: 4px !important; overflow: visible !important; }
+/* centre every file icon on the chevron's centre: chevron box 19–35 (centre 27) → icon box 16px at x=19, glyph centred; label stays at 44 */
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js { width: 16px !important; min-width: 16px !important; max-width: 16px !important; padding: 0 0 0 0 !important; margin: 0 9px 0 3px !important;
+  justify-content: center !important; box-sizing: content-box !important; }
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js::before { margin: 0 auto !important; }
+/* ---- Material Icon Theme: uniform 16px squares centred on the chevron column ---- */
+.theia-FileTree .theia-TreeNodeContent > .theia-TreeNodeSegment:not(.theia-ExpansionToggle):not(.theia-TreeNodeSegmentGrow),
+.theia-FileTree .theia-TreeNodeContent > .file-icon {
+  width: 16px !important; min-width: 16px !important; max-width: 16px !important; height: 16px !important;
+  margin: 0 9px 0 3px !important; padding: 0 !important; background-size: 16px 16px !important; background-position: center !important; background-repeat: no-repeat !important;
+  display: inline-block !important; flex: none !important; }
+/* chevron-only folders under any icon theme */
+.theia-FileTree .theia-ExpandableTreeNode .theia-TreeNodeContent > .file-icon,
+.theia-FileTree .theia-ExpandableTreeNode .theia-TreeNodeContent > [class*="folder"] { display: none !important; }
+/* vertically centre icons on the label text (was baseline-aligned) */
+.theia-FileTree .theia-TreeNodeContent { display: flex !important; align-items: center !important; height: 26px !important; }
+.theia-FileTree .theia-TreeNodeContent > .file-icon, .theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js,
+.theia-FileTree .theia-TreeNodeContent > .theia-ExpansionToggle { align-self: center !important; vertical-align: middle !important; position: relative; top: -3px; }
+.theia-FileTree .theia-TreeNodeSegmentGrow { display: flex !important; align-items: center !important; line-height: 26px !important; }
+/* file tree: fixed width — the left/main sash is inert and drawn as the panel border */
+#theia-left-right-split-panel > .lm-SplitPanel-handle:nth-child(2),
+#theia-left-right-split-panel > .p-SplitPanel-handle:nth-child(2) { pointer-events: none !important; cursor: default !important; width: 1px !important; background: var(--ws-border) !important; }
+#theia-left-content-panel { min-width: 280px !important; max-width: 280px !important; }
+
+#theia-left-right-split-panel > .lm-SplitPanel-handle:nth-child(2)::after { display: none !important; }
+/* ---- brand in the sidebar, full-height main/Claude ---- */
+#theia-app-shell, .theia-ApplicationShell { top: 0 !important; height: 100% !important; }
+#workspace-brand-bar { position: absolute !important; top: 0; left: 0; right: 0; height: 46px; z-index: 6; background: var(--ws-navy);
+  border-bottom: 1px solid var(--ws-border); display: flex; align-items: center; padding: 0 18px; }
+/* push the side panel's content below the brand */
+#theia-left-content-panel > .lm-BoxPanel { top: 46px !important; height: calc(100% - 46px) !important; }
+/* ---- sidebar colours = shell: #sidebar rgba(16,21,43,.55) over navy, header .7, border #252c4a ---- */
+#theia-left-content-panel { background: linear-gradient(rgba(16,21,43,.55), rgba(16,21,43,.55)), var(--ws-navy) !important; border-right: 1px solid var(--ws-border) !important; }
+#theia-left-content-panel .theia-side-panel, #theia-left-content-panel .theia-view-container, #theia-left-content-panel .part,
+#theia-left-content-panel .theia-view-container-part-header, #theia-left-content-panel .theia-TreeContainer, #theia-left-content-panel .theia-Tree,
+#theia-left-content-panel .theia-ExplorerContainer, #theia-left-content-panel .lm-Widget, #theia-left-content-panel .body { background: transparent !important; }
+#workspace-brand-bar { background: rgba(16,21,43,.7) !important; } /* nothing scrolls beneath it: no backdrop-filter */
+#workspace-footer { background: linear-gradient(rgba(16,21,43,.55), rgba(16,21,43,.55)), var(--ws-navy) !important; }
+#workspace-footer .workspace-settings, #workspace-footer .workspace-running { background: transparent !important; }
+/* ---- mobile (≤768px): sidebar becomes an off-canvas drawer ---- */
+#workspace-menu-btn, #workspace-backdrop { display: none; }
+body.ws-mobile #theia-left-content-panel { position: fixed !important; left: 0 !important; top: 0 !important; bottom: 0 !important; height: 100% !important;
+  width: 280px !important; min-width: 280px !important; max-width: 280px !important; z-index: 1000; transform: translateX(-100%); transition: transform .2s ease;
+  box-shadow: 0 0 40px rgba(0,0,0,.6); }
+body.ws-mobile.ws-sidebar-open #theia-left-content-panel { transform: none; }
+body.ws-mobile #workspace-menu-btn { display: flex; position: fixed; top: 8px; left: 8px; width: 38px; height: 38px; z-index: 1001; flex-direction: column; justify-content: center; gap: 5px;
+  align-items: center; border: 1px solid var(--ws-border); border-radius: 10px; background: rgba(16,21,43,.85); cursor: pointer; padding: 0; }
+body.ws-mobile #workspace-menu-btn span { display: block; width: 18px; height: 2px; border-radius: 2px; background: var(--ws-text); }
+body.ws-mobile.ws-sidebar-open #workspace-menu-btn { left: 288px; }
+body.ws-mobile.ws-sidebar-open #workspace-backdrop { display: block; position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,.45); }
+body.ws-mobile #theia-left-right-split-panel > .lm-SplitPanel-handle:nth-child(2) { display: none !important; }
+/* mobile: the split must not reserve the sidebar's slot (panel is off-canvas) */
+body.ws-mobile #theia-left-content-panel { min-width: 0 !important; }
+body.ws-mobile #theia-right-content-panel, body.ws-mobile #theia-bottom-split-panel { left: 0 !important; }
+/* mobile: Lumino sized the inner panels from the 0px slot — force them to the drawer's width */
+body.ws-mobile #theia-left-content-panel > .lm-BoxPanel, body.ws-mobile #theia-left-content-panel .theia-side-panel,
+body.ws-mobile #theia-left-content-panel .theia-view-container, body.ws-mobile #theia-left-content-panel .part,
+body.ws-mobile #theia-left-content-panel .lm-SplitPanel, body.ws-mobile #theia-left-content-panel .lm-DockPanel,
+body.ws-mobile #theia-left-content-panel .theia-ExplorerContainer, body.ws-mobile #theia-left-content-panel .theia-FileTree,
+body.ws-mobile #theia-left-content-panel .theia-TreeContainer { width: 280px !important; min-width: 280px !important; max-width: 280px !important; left: 0 !important; }
+/* ---- first-run wizard ---- */
+.workspace-wizard { position: fixed; inset: 0; z-index: 5000; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(900px 500px at 85% -10%, rgba(168,85,247,.20), transparent 60%), radial-gradient(800px 500px at -10% 110%, rgba(236,72,153,.12), transparent 60%), var(--ws-navy); }
+.ws-wizard-card { width: min(640px, 94vw); color: var(--ws-text); font: 14px/1.5 Satoshi, system-ui, sans-serif; }
+.ws-wizard-title { font-size: 34px; font-weight: 700; letter-spacing: -.02em; margin: 0 0 22px; text-align: center; }
+.ws-wizard-title .g { background: linear-gradient(90deg, var(--ws-pink), var(--ws-purple)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.ws-wizard-steps { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 22px; }
+.ws-wizard-step { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--ws-border); color: var(--ws-muted); font-size: 13px; }
+.ws-wizard-step.active { border-color: var(--ws-purple); color: var(--ws-text); } .ws-wizard-step.done { border-color: var(--ws-ok); color: var(--ws-ok); }
+.ws-wizard-body { background: var(--ws-panel); border: 1px solid var(--ws-border); border-radius: 16px; min-height: 280px; display: flex; flex-direction: column; justify-content: center; padding: 18px 22px; }
+.ws-wizard-body .ws-flow { border: 0; background: transparent; padding: 0; margin: 0; text-align: center; }
+.ws-wizard-body .ws-form { max-width: 320px; margin: 0 auto; }
+.ws-wizard-desc { text-align: center; color: var(--ws-muted); margin: 0 0 14px; }
+.ws-wizard-done { text-align: center; } .ws-wizard-emoji { font-size: 40px; }
+.ws-wizard-foot { display: flex; justify-content: center; gap: 12px; margin-top: 18px; }
+/* ---- help popover ---- */
+.ws-help p { margin: 4px 0; font-size: 13px; } .ws-help-h { font: 600 11px/1 Satoshi, system-ui !important; letter-spacing: .09em; text-transform: uppercase; color: var(--ws-muted); margin: 12px 0 6px !important; }
+.ws-help kbd { border: 1px solid var(--ws-border); border-radius: 5px; padding: 1px 6px; font: 11px "JetBrains Mono", monospace; background: var(--ws-panel2); }
+
+/* ---- boot veil: the first ~1.5s re-arrange panels several times (activity bars, Claude→right, footer) —
+   keep the shell invisible until the layout has settled, then fade in once ---- */
+#theia-app-shell { transition: opacity .22s ease; }
+body.ws-booting #theia-app-shell, body.ws-booting #workspace-menu-btn { opacity: 0 !important; pointer-events: none; }
+/* ---- Settings: centred modal, replaces the anchored popover ---- */
+.ws-modal-backdrop { position: fixed; inset: 0; z-index: 4000; background: rgba(5,7,16,.6); display: flex; align-items: center; justify-content: center; }
+.ws-modal { width: min(520px, 94vw); max-height: 86vh; display: flex; flex-direction: column; background: var(--ws-panel); border: 1px solid var(--ws-border);
+  border-radius: 16px; box-shadow: 0 24px 80px rgba(0,0,0,.6); color: var(--ws-text); font: 14px/1.5 Satoshi, system-ui, sans-serif; }
+.ws-modal-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--ws-border); }
+.ws-modal-head strong { flex: 1; font-size: 15px; }
+.ws-modal-head .ws-back { font-size: 13px; }
+.ws-modal-body { padding: 14px 18px 18px; overflow: auto; }
+.ws-modal .ws-flow { margin: 0; border: 0; background: transparent; padding: 0; }
+.ws-modal .ws-help-h:first-child { margin-top: 0 !important; }
+.ws-modal .ws-row.ws-acct { padding: 8px 10px; }
+.ws-flow-desc { margin: 0 0 12px; }
+.ws-detail { margin: -2px 0 10px; }
+/* guided sign-in: the code sits on its own line, the action button below it */
+.ws-flow .ws-code { display: block; width: max-content; margin: 6px auto 12px; }
+.ws-wizard-body .ws-flow .ws-code { margin-left: auto; margin-right: auto; }
+.ws-modal .ws-flow .ws-code { margin-left: 0; }
+.ws-modal .ws-flow { text-align: left; }
+.ws-flow > div > div > .ws-primary { margin-top: 2px; }
+/* ---- sidebar footer: Help link + Settings button with an inline menu ---- */
+.ws-help-btn { margin-bottom: 8px; }
+.ws-settings-anchor { position: relative; }
+.ws-settings-inline { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 20; padding: 4px; border: 1px solid var(--ws-border);
+  border-radius: 12px; background: var(--ws-panel); box-shadow: 0 -12px 40px rgba(0,0,0,.45); }
+.ws-settings-inline .ws-row.ws-acct { padding: 6px 10px; }
+.ws-settings-inline hr { margin: 4px 6px; }
+.ws-modal-head .ws-back { display: none; }
+/* compact forms in modals (npm sign-in): no full-width inputs/buttons */
+.ws-modal .ws-form { max-width: 340px; }
+.ws-modal .ws-form .ws-primary, .ws-modal .ws-envfoot .ws-primary { align-self: flex-start; padding: 8px 18px; }
+.ws-modal .ws-form input { font-size: 13px; padding: 7px 10px; }
+/* no draggable sash between the (hidden) editor area and Claude when nothing is open */
+body.ws-no-editor #theia-left-right-split-panel > .lm-SplitPanel-handle:nth-child(4) { pointer-events: none !important; }
+/* ---- Files: fixed open (no collapse, no chevron) with upload actions in the header ---- */
+#explorer-view-container--files > .theia-view-container-part-header { pointer-events: none !important; cursor: default !important; padding-left: 14px !important; display: flex !important; align-items: center; }
+#explorer-view-container--files > .theia-view-container-part-header .theia-ExpansionToggle { display: none !important; }
+#explorer-view-container--files > .theia-view-container-part-header .label { flex: 1; }
+.ws-files-actions { pointer-events: auto; display: flex; gap: 2px; margin-left: auto; padding-right: 6px; }
+.ws-files-btn { border: 0; background: none; color: var(--ws-muted); width: 24px; height: 22px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 15px !important; padding: 0; }
+.ws-files-btn:hover { color: var(--ws-text); background: rgba(168,85,247,.15); }
+/* the Settings menu overlays upward out of the widget — Lumino widgets clip (overflow:hidden) */
+#workspace-footer, #workspace-footer .workspace-settings, #workspace-footer .workspace-settings > .ws-settings { overflow: visible !important; }
+/* Lumino sizes the sidebar\x27s inner panels from its own (smaller) idea of the panel width — force them to fill */
+#theia-left-content-panel > .lm-BoxPanel, #theia-left-content-panel .theia-side-panel, #theia-left-content-panel .theia-view-container,
+#theia-left-content-panel .part, #theia-left-content-panel .lm-SplitPanel, #theia-left-content-panel .theia-ExplorerContainer,
+#theia-left-content-panel .theia-FileTree, #theia-left-content-panel .theia-TreeContainer { width: 100% !important; left: 0 !important; }
+/* tree rows and the header actions share one right edge, 8px from the border */
+#theia-left-content-panel .theia-TreeContainer { padding-right: 6px !important; }
+.theia-TreeNode { margin-right: 2px !important; }
+.ws-files-actions { padding-right: 8px; }
+#theia-statusBar, #theia-top-panel { display: none !important; }
+#theia-left-content-panel .theia-TreeNode { width: calc(100% - 4px) !important; box-sizing: border-box; }
+#theia-left-content-panel .theia-TreeContainer, #theia-left-content-panel .part, #theia-left-content-panel .theia-view-container { box-sizing: border-box !important; }
+/* ---- editor tab strip: same 46px band and bottom border as the brand bar, so one line runs across the top ---- */
+#theia-main-content-panel > .lm-DockPanel .lm-TabBar[data-orientation=horizontal],
+#theia-main-content-panel .lm-TabBar.theia-app-centers {
+  min-height: 47px !important; max-height: 47px !important; height: 47px !important; box-sizing: border-box !important; /* 46 + the 1px border, like #workspace-brand-bar */
+  border-bottom: 1px solid var(--ws-border) !important; background: var(--ws-navy) !important; padding: 0 8px !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-content { height: 100% !important; align-items: flex-end !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab {
+  height: 34px !important; min-height: 34px !important; max-height: 34px !important; margin: 0 2px 0 0 !important; padding: 0 12px !important;
+  border: 1px solid transparent !important; border-bottom: 0 !important; border-radius: 8px 8px 0 0; background: transparent !important;
+  color: var(--ws-muted) !important; align-items: center !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current {
+  background: var(--ws-panel) !important; border-color: var(--ws-border) !important; color: var(--ws-text) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current .lm-TabBar-tabLabel { font-style: normal !important; }
+/* the editor content starts under the band (Lumino positions it from the tab bar\x27s size) */
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tabIcon { margin-right: 6px; }
+/* flat tab strip (replaces the card look above): full-height tabs, muted inactive text,
+   active = text + 2px gradient underline; the band's bottom border runs the whole width */
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-content { align-items: stretch !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab {
+  height: 46px !important; min-height: 46px !important; max-height: 46px !important; margin: 0 !important; padding: 0 14px !important;
+  border: 0 !important; border-radius: 0 !important; background: transparent !important; color: var(--ws-muted) !important;
+  position: relative; align-items: center !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab:hover { color: var(--ws-text) !important; background: rgba(168,85,247,.06) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current { background: transparent !important; color: var(--ws-text) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current::after {
+  content: ""; position: absolute; left: 10px; right: 10px; bottom: 0; height: 2px; border-radius: 2px 2px 0 0;
+  background: linear-gradient(90deg, var(--ws-pink), var(--ws-purple)); }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tabLabel { font: 500 13px Satoshi, system-ui !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tabCloseIcon { margin-left: 8px; opacity: .6; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab:hover .lm-TabBar-tabCloseIcon { opacity: 1; }
+/* ---- popup terminal: above everything, Close hides, session keeps running ---- */
+.ws-term-backdrop { position: fixed; inset: 0; z-index: 4500; background: rgba(5,7,16,.55); display: none; align-items: center; justify-content: center; }
+.ws-term-backdrop.open { display: flex; }
+.ws-term-modal { width: min(1100px, 92vw); height: min(640px, 78vh); display: flex; flex-direction: column; background: var(--ws-panel);
+  border: 1px solid var(--ws-border); border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,.6); color: var(--ws-text); overflow: hidden; }
+.ws-term-head { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--ws-border); font: 14px Satoshi, system-ui; }
+.ws-term-head strong { font-size: 14px; } .ws-term-head .ws-small { flex: 1; }
+.ws-term-body { flex: 1; min-height: 0; position: relative; background: var(--ws-navy); }
+.ws-term-body > .ws-term-widget { position: absolute !important; inset: 8px !important; width: auto !important; height: auto !important; }
+.ws-term-body .xterm { height: 100%; }
+/* ---- brand bar: original wordmark, tuned — 15px, left edge on the FILES/tree grid (16px), optically centred ---- */
+#workspace-brand-bar { padding: 0 16px !important; font-size: 15px !important; letter-spacing: -.015em !important; }
+#workspace-brand-bar .g { margin-left: 4px; }
+/* ---- Satoshi for Theia's own UI chrome too (tree, tabs, headers, inputs); the editor stays monospace ---- */
+:root, body, .theia-ApplicationShell { --theia-ui-font-family: Satoshi, system-ui, -apple-system, "Segoe UI", sans-serif !important; }
+#theia-left-content-panel, #theia-main-content-panel .lm-TabBar, .theia-TreeNode, .theia-view-container-part-header, .ws-modal, .ws-term-head, .workspace-wizard { font-family: Satoshi, system-ui, -apple-system, "Segoe UI", sans-serif; }
+/* ---- Files header: one "Upload ▾" button with a files/folder menu ---- */
+.ws-files-actions { position: relative; align-items: center; }
+.ws-files-btn { display: none; }
+.ws-add-btn { border: 0; background: none; color: var(--ws-muted); font: 500 12px Satoshi, system-ui, sans-serif; letter-spacing: 0; text-transform: none; padding: 3px 8px; border-radius: 6px; cursor: pointer; }
+.ws-add-btn:hover { color: var(--ws-text); background: rgba(168,85,247,.12); }
+.ws-add-btn .ws-caret { font-size: 9px; margin-left: 2px; opacity: .8; }
+.ws-add-menu { position: absolute; right: 8px; top: 34px; z-index: 30; min-width: 170px; padding: 4px; background: var(--ws-panel); border: 1px solid var(--ws-border);
+  border-radius: 10px; box-shadow: 0 12px 40px rgba(0,0,0,.5); text-transform: none; letter-spacing: 0; }
+.ws-add-menu button { display: block; width: 100%; text-align: left; border: 0; background: none; color: var(--ws-text); padding: 8px 10px; border-radius: 7px; font: 400 13px Satoshi, system-ui, sans-serif; cursor: pointer; }
+.ws-add-menu button:hover { background: rgba(168,85,247,.12); }
+/* ---- hover delete on tree rows (× → "Delete?" → gone) ---- */
+.ws-tree-del { position: absolute; right: 14px; top: -100px; z-index: 6; border: 0; background: none; color: var(--ws-muted); opacity: 0; pointer-events: none;
+  padding: 2px 7px; border-radius: 6px; font: 14px/1 Satoshi, system-ui, sans-serif; height: 22px; cursor: pointer; transition: opacity .12s ease; }
+.ws-tree-del.show { opacity: 1; pointer-events: auto; }
+.ws-tree-del:hover, .ws-tree-del.armed { color: #ff8080; }
+.ws-tree-del.armed { font-size: 11px; font-weight: 600; }
+.ws-add-menu { position: fixed !important; z-index: 4600; }
+.ws-add-btn:focus, .ws-add-btn:focus-visible, .ws-tree-del:focus, .ws-tree-del:focus-visible, .ws-add-menu button:focus { outline: none !important; box-shadow: none !important; border: 0 !important; }
+
+/* ==== THEMES: Dark (default, vercel-black) / Navy / Light — variables below, picked via workbench.colorTheme → body.ws-theme-* ==== */
+/* Reference = vercel.com dark: pure black page, var(--ws-rail) sidebar, #111/var(--ws-hover) panels, hairline var(--ws-border) borders,
+   #ededed/#a1a1a1/#666 text, small radii, no glows. Our pink→purple stays as the only accent (active tab,
+   primary buttons). Additive block — delete it to go back. */
+:root {
+  --ws-navy: #000000;        /* site page background ("deep") — editor, tab strip, brand band */
+  --ws-rail: #0a0a0a;        /* site sidebar rail (product demo) — left panel + footer */
+  --ws-panel: #111111;       /* site boards / cards ("Harbor Navy") — menus, modals, popovers */
+  --ws-panel2: #1a1a1a;      /* inner panel ("Dock") — inputs, code chips, active tree row, line highlight */
+  --ws-border: #2a2a2a;      /* site --line */
+  --ws-text: #ededed;        /* Foam */
+  --ws-muted: #a1a1a1;       /* Mist (site body copy) */
+  --ws-faint: #666666;       /* site captions / labels */
+  --ws-ok: #46d48a;          /* site "live" colour (Signal Teal) — running dot, done state */
+  --ws-pink: #ec4899; --ws-purple: #a855f7;                 /* variant A accent (ours) */
+  --ws-accent-rgb: 168,85,247;                              /* tint base for hover/selection/focus */
+  --ws-grad: linear-gradient(90deg, var(--ws-pink), var(--ws-purple));
+  --ws-btn-ink: #fff;
+  --ws-hover: #1a1a1a; --ws-selected: #1a1a1a; --ws-border-strong: #444444; --ws-danger: #ff5d5d; --ws-shadow: rgba(0,0,0,.6); --ws-backdrop: rgba(0,0,0,.75);
+  --ws-r-card: 12px; --ws-r-btn: 6px; --ws-r-item: 6px;    /* vercel: cards 12, buttons/items 6 */
+}
+/* --- surfaces: flat, like the site (no overlay gradients, no backdrop tints) --- */
+#theia-left-content-panel, #workspace-footer, #workspace-brand-bar { background: var(--ws-rail) !important; }
+body.ws-mobile #workspace-menu-btn { background: var(--ws-rail); }
+.theia-TreeNode.theia-mod-selected { background: var(--ws-selected) !important; box-shadow: inset 2px 0 0 var(--ws-purple); }   /* neutral selection, thin accent edge */               /* site: .item.on = panel bg, foam text */
+.theia-TreeNode:hover, .ws-row:hover, .ws-add-btn:hover, .ws-add-menu button:hover, .ws-files-btn:hover { background: var(--ws-hover) !important; }  /* neutral hover like vercel */
+.lm-SplitPanel-handle:hover, .p-SplitPanel-handle:hover { background: rgba(var(--ws-accent-rgb),.35) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab:hover { background: rgba(var(--ws-accent-rgb),.06) !important; }
+.ws-flow input:focus, .ws-envrow input:focus { border-color: var(--ws-purple); box-shadow: 0 0 0 3px rgba(var(--ws-accent-rgb),.25); }
+/* --- brand: plain text, no logo --- */
+#workspace-brand-bar { font-weight: 700 !important; font-size: 16px !important; letter-spacing: -.2px !important; }
+#workspace-brand-bar .g, .ws-wizard-title .g { background: var(--ws-grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#workspace-brand-bar .g { margin-left: 4px; }
+/* --- buttons: site .btn geometry (9px radius, weight 500, 15px), gradient/teal fill, no glow (site has no shadows) --- */
+.ws-primary { background: var(--ws-grad); color: var(--ws-btn-ink); font-weight: 500; font-size: 14px; box-shadow: none; border-radius: var(--ws-r-btn); }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current::after { background: var(--ws-grad); }
+/* --- radii / borders / elevation from the site --- */
+.ws-flow, .ws-settings-menu, .ws-settings-inline, .ws-add-menu, .ws-code, .ws-wizard-body, .ws-modal, .ws-term-modal { border-radius: var(--ws-r-card); }
+.ws-settings-btn, .ws-add, .ws-flow input, .ws-envrow input { border-radius: var(--ws-r-btn); }
+.ws-row, .theia-TreeNode { border-radius: var(--ws-r-item); }
+.ws-settings-menu, .ws-settings-inline, .ws-add-menu { box-shadow: 0 8px 28px var(--ws-shadow); }   /* site is shadowless; menus float over the editor so keep a soft one */
+.ws-modal, .ws-term-modal { box-shadow: 0 16px 56px var(--ws-shadow); }
+.ws-modal-backdrop, .ws-term-backdrop { background: var(--ws-backdrop); }
+/* --- typography: site scale — interface 500, captions/labels Faint, body copy Mist --- */
+.ws-settings-btn, .ws-add-btn, #theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tabLabel { font-weight: 500; }
+#theia-left-content-panel .theia-view-container-part-header .label, #workspace-footer .workspace-running:before, .ws-help-h { color: var(--ws-faint) !important; }
+.ws-modal-head strong { font-size: 15px; font-weight: 500; letter-spacing: -.1px; }
+/* --- alerts: site "coral" --- */
+.ws-fail, .ws-tree-del:hover, .ws-tree-del.armed { color: var(--ws-danger); }
+.ws-dot::after { background: rgba(70,212,138,.5); }
+/* --- wizard backdrop: keep the glow, on the deep page colour --- */
+.workspace-wizard { background: radial-gradient(900px 500px at 85% -10%, rgba(var(--ws-accent-rgb),.18), transparent 60%), radial-gradient(800px 500px at -10% 110%, rgba(236,72,153,.10), transparent 60%), var(--ws-navy); }
+/* --- Theia's own colour vars the theme json doesn't reach through our overrides --- */
+:root, body, .theia-ApplicationShell { --theia-focusBorder: rgba(var(--ws-accent-rgb),.4) !important; --theia-list-hoverBackground: var(--ws-hover) !important;
+  --theia-list-activeSelectionBackground: var(--ws-hover) !important; --theia-sash-hoverBorder: var(--ws-purple) !important; }
+
+/* ---- theme variable sets (Dark is :root above) ---- */
+/* Navy: a deep-blue dark mode — base #071627 / base-2 #0a1c2e / base-3 #0f2133, dimmed #243242, text #f3f3f6 / #8a98a8,
+   accent pink #ff6bc4. --ws-purple stays: it is OpenCode's colour, not the theme's. */
+body.ws-theme-navy { --ws-navy: #071627; --ws-rail: #0a1c2e; --ws-panel: #0c1e30; --ws-panel2: #0f2133; --ws-border: #243242; --ws-border-strong: #394b60;
+  --ws-text: #f3f3f6; --ws-muted: #8a98a8; --ws-faint: #5b6a7b; --ws-ok: #3fd68f; --ws-danger: #ff8080;
+  --ws-accent-rgb: 255,107,196;
+  --ws-hover: rgba(255,107,196,.08); --ws-selected: rgba(255,107,196,.16); --ws-shadow: rgba(0,0,0,.5); --ws-backdrop: rgba(3,10,20,.7); }
+body.ws-theme-light { --ws-navy: #ffffff; --ws-rail: #fafafa; --ws-panel: #ffffff; --ws-panel2: #f5f5f5; --ws-border: #e5e5e5; --ws-border-strong: #c9c9c9;
+  --ws-text: #171717; --ws-muted: #666666; --ws-faint: #8f8f8f; --ws-ok: #15803d; --ws-danger: #dc2626;
+  --ws-hover: #f0f0f0; --ws-selected: #ebebeb; --ws-shadow: rgba(0,0,0,.12); --ws-backdrop: rgba(0,0,0,.35); }
+body.ws-theme-light .workspace-wizard { background: radial-gradient(900px 500px at 85% -10%, rgba(168,85,247,.10), transparent 60%), radial-gradient(800px 500px at -10% 110%, rgba(236,72,153,.08), transparent 60%), var(--ws-navy); }
+body.ws-theme-light .lm-SplitPanel-handle:hover { background: rgba(168,85,247,.25) !important; }
+/* ---- theme picker in Settings ---- */
+.ws-theme-row { display: flex; gap: 6px; padding: 6px 10px 4px; }
+.ws-theme-pick { flex: 1; border: 1px solid var(--ws-border); background: var(--ws-rail); color: var(--ws-muted); border-radius: var(--ws-r-btn); padding: 6px 0; font: 500 12px Satoshi, system-ui, sans-serif; cursor: pointer; }
+.ws-theme-pick:hover { color: var(--ws-text); border-color: var(--ws-border-strong); }
+.ws-theme-pick.on { color: var(--ws-text); border-color: var(--ws-purple); box-shadow: inset 0 0 0 1px var(--ws-purple); }
+/* ==== /THEMES ==== */
+/* vercel: hairline borders everywhere, stronger on hover; buttons white-on-black secondary */
+.ws-settings-btn { background: var(--ws-rail) !important; border-color: var(--ws-border) !important; }
+.ws-settings-btn:hover { border-color: var(--ws-border-strong) !important; }
+.ws-help-btn { background: var(--ws-rail) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab:hover { background: var(--ws-rail) !important; }
+
+
+/* wordmark: the workspace's name (or "Workspaces") in plain text, no gradient */
+#workspace-brand-bar .ws-word { color: var(--ws-text); font-weight: 700; letter-spacing: -.2px; }
+/* right side panel: Lumino reserves the (hidden) toolbar's 35px above Claude — collapse the slot like on the left */
+#theia-right-content-panel .theia-sidepanel-toolbar { height: 0 !important; min-height: 0 !important; max-height: 0 !important; padding: 0 !important; border: 0 !important; }
+/* Files header action: "+ Add", right edge on the rows' right edge (8px from the border) */
+.ws-files-actions { padding-right: 8px !important; }
+.ws-add-btn { padding: 3px 8px; margin-right: -6px; }
+/* tree selection: never draw the focus frame — the row reads the same whether the tree has focus or not */
+:root, body, .theia-ApplicationShell { --theia-list-focusOutline: transparent !important; --theia-list-inactiveFocusOutline: transparent !important; --theia-list-focusAndSelectionOutline: transparent !important; }
+#theia-left-content-panel .theia-TreeNode, #theia-left-content-panel .theia-TreeNode.theia-mod-focus, #theia-left-content-panel .theia-TreeNode:focus,
+#theia-left-content-panel .theia-Tree:focus .theia-TreeNode.theia-mod-selected, #theia-left-content-panel .theia-Tree:focus-within .theia-TreeNode.theia-mod-selected,
+#theia-left-content-panel .theia-TreeContainer:focus, #theia-left-content-panel .theia-Tree:focus { outline: none !important; }
+#theia-left-content-panel .theia-TreeNode.theia-mod-selected { background: var(--ws-selected) !important; box-shadow: inset 2px 0 0 var(--ws-purple) !important; }
+#theia-left-content-panel .theia-Tree:focus .theia-TreeNode.theia-mod-selected, #theia-left-content-panel .theia-TreeNode.theia-mod-selected.theia-mod-focus { background: var(--ws-hover) !important; }
+/* ---- mobile: one pane at a time ---- */
+#workspace-mobile-switch { display: none; }
+body.ws-mobile #workspace-mobile-switch:not([hidden]) { display: inline-flex; position: fixed; top: 8px; left: 50%; transform: translateX(-50%); z-index: 1001;
+  background: var(--ws-panel); border: 1px solid var(--ws-border); border-radius: 999px; padding: 3px; gap: 2px; }
+#workspace-mobile-switch button { border: 0; background: transparent; color: var(--ws-muted); font: 500 13px Satoshi, system-ui, sans-serif; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+#workspace-mobile-switch button.on { background: var(--ws-hover); color: var(--ws-text); }
+body.ws-mobile.ws-mobile-editor #theia-right-content-panel { display: none !important; }
+body.ws-mobile.ws-mobile-claude #theia-main-content-panel { display: none !important; }
+/* room for the hamburger and the switch above the editor's tab strip */
+body.ws-mobile.ws-mobile-editor #theia-main-content-panel .lm-TabBar[data-orientation=horizontal] { padding-left: 52px !important; }
+/* the hamburger sits on the app's dark chrome, not floating on white cards */
+body.ws-mobile #workspace-menu-btn { background: var(--ws-panel); border-color: var(--ws-border); }
+body.ws-mobile #workspace-menu-btn span { background: var(--ws-text); }
+/* drawer: comfortable touch targets */
+body.ws-mobile .theia-TreeNode { height: 36px !important; line-height: 36px !important; }
+body.ws-mobile .theia-FileTree .theia-TreeNodeContent { height: 36px !important; }
+body.ws-mobile .ws-settings-inline .ws-row.ws-acct { padding: 10px 10px; }
+body.ws-mobile .ws-modal { width: calc(100vw - 16px); max-height: 90vh; }
+body.ws-mobile .ws-term-modal { width: calc(100vw - 8px); height: 70vh; }
+/* Lumino honours the panels' CSS min-width even when they are display:none — on a phone both panes must be able to go to 0 */
+body.ws-mobile #theia-right-content-panel, body.ws-mobile #theia-main-content-panel, body.ws-mobile #theia-right-content-panel > .lm-BoxPanel { min-width: 0 !important; }
+/* mobile switch: right-aligned over the editor's tab strip (tabs get room), hidden while the drawer is open */
+body.ws-mobile.ws-mobile-editor #workspace-mobile-switch:not([hidden]) { left: auto; right: 8px; transform: none; }
+body.ws-mobile.ws-mobile-editor #theia-main-content-panel .lm-TabBar[data-orientation=horizontal] { padding-right: 160px !important; }
+body.ws-mobile.ws-sidebar-open #workspace-mobile-switch { display: none !important; }
+/* right pane: Lumino sizes the inner panels from its own idea of the width (minus the hidden 48px activity bar) — fill the pane.
+   The OpenCode card (.ws-oc) too: without it, dragging the divider left it 48px short of its card (a gap right of the scrollbar). */
+#theia-right-content-panel > .lm-BoxPanel, #theia-right-content-panel .theia-side-panel, #theia-right-content-panel .lm-DockPanel,
+#theia-right-content-panel .theia-view-container, #theia-right-content-panel .part, #theia-right-content-panel .part > .body,
+#theia-right-content-panel .theia-webview, #theia-right-content-panel .webview-widget,
+#theia-right-content-panel .ws-oc { width: 100% !important; left: 0 !important; box-sizing: border-box; }
+/* and no stray sash pixels on a phone */
+body.ws-mobile #theia-left-right-split-panel > .lm-SplitPanel-handle { width: 0 !important; min-width: 0 !important; }
+body.ws-mobile #theia-right-content-panel, body.ws-mobile #theia-main-content-panel { left: 0 !important; width: 100vw !important; }
+body.ws-mobile #workspace-footer .ws-row.ws-app { padding: 10px 8px; font-size: 15px; }
+/* ---- mobile "Open app" chip: next to the hamburger, only while an app is listening ---- */
+#workspace-app-chip { display: none; }
+body.ws-mobile #workspace-app-chip:not([hidden]) { display: inline-flex; align-items: center; gap: 7px; position: fixed; top: 12px; left: 54px; z-index: 1001; height: 30px; padding: 0 12px;
+  border-radius: 999px; background: var(--ws-panel); border: 1px solid var(--ws-border); color: var(--ws-text); font: 500 13px Satoshi, system-ui, sans-serif; text-decoration: none; }
+body.ws-mobile #workspace-app-chip .ws-ext { color: var(--ws-muted); }
+body.ws-mobile.ws-sidebar-open #workspace-app-chip { display: none !important; }
+/* editor view has no room for it (hamburger + tab + switch): the chip lives on the Claude view and in the drawer */
+body.ws-mobile.ws-mobile-editor #workspace-app-chip { display: none !important; }
+
+/* ==== SOFT ISLANDS (direction A): floating cards on a warm near-black page, no hairlines, roomier type ==== */
+:root { --ws-bg: #0c0c0e; --ws-card: #141416; --ws-card2: #1e1e22; --ws-navy: #141416; --ws-rail: #141416; --ws-panel: #1a1a1d; --ws-panel2: #1e1e22;
+  --ws-border: #232327; --ws-hover: #1e1e22; --ws-selected: #1e1e22; --ws-muted: #b5b5ba; --ws-faint: #8a8a8f; --ws-r-card: 14px; --ws-r-btn: 10px; --ws-r-item: 10px; }
+body, #theia-app-shell, .theia-ApplicationShell, #theia-left-right-split-panel { background: var(--ws-bg) !important; }
+/* the three panels become cards: the border is painted in the page colour (= gutter) and the card background is
+   clipped to the padding box; per-corner radii are border-width + 14 so every visible corner is 14px */
+#theia-left-content-panel, #theia-main-content-panel, #theia-right-content-panel {
+  border-style: solid !important; border-color: var(--ws-bg) !important; background: var(--ws-card) !important; background-clip: padding-box !important; overflow: hidden !important; }
+#theia-left-content-panel  { border-width: 0 6px 12px 10px !important; border-radius: 24px 20px 20px 24px / 14px 14px 26px 26px !important; }  /* top border 0: cards meet the bar (mockup); radii keep every visible corner at 14px */
+#theia-main-content-panel  { border-width: 0 6px 12px 6px !important;  border-radius: 20px / 14px 14px 26px 26px !important; }
+#theia-right-content-panel { border-width: 0 10px 12px 6px !important; border-radius: 20px 24px 24px 20px / 14px 14px 26px 26px !important; }
+body.ws-no-editor #theia-right-content-panel { border-left-width: 6px !important; }
+#theia-left-right-split-panel > .lm-SplitPanel-handle, #theia-left-right-split-panel > .p-SplitPanel-handle, #theia-left-right-split-panel > .lm-SplitPanel-handle:nth-child(2), #theia-left-right-split-panel > .p-SplitPanel-handle:nth-child(2) { background: transparent !important; width: 10px !important; }
+/* brand band inside the sidebar card */
+#workspace-brand-bar { background: transparent !important; border-bottom: 0 !important; height: 52px; padding: 0 16px !important; }
+#theia-left-content-panel > .lm-BoxPanel { top: 52px !important; height: calc(100% - 52px) !important; }
+#theia-left-content-panel .theia-side-panel, #theia-left-content-panel .lm-Widget { background: transparent !important; }
+/* Files header: sentence case, real type size; + Add as a soft pill */
+#theia-left-content-panel .theia-view-container-part-header { height: 36px !important; padding-left: 14px !important; }
+#theia-left-content-panel .theia-view-container-part-header .label { font: 600 14px/1 Satoshi, system-ui !important; letter-spacing: 0 !important; text-transform: none !important; color: var(--ws-text) !important; }
+.ws-add-btn { background: var(--ws-card2) !important; color: var(--ws-muted) !important; border-radius: 8px !important; padding: 5px 10px !important; font-size: 12px !important; }
+.ws-add-btn:hover { color: var(--ws-text) !important; }
+/* tree: 34px rows, 14px type, 10px radius, no accent focus ring */
+.theia-TreeNode { height: 34px !important; line-height: 34px !important; font-size: 14px !important; border-radius: 10px !important; margin: 1px 6px 1px 2px !important; }
+#theia-left-content-panel .theia-TreeNode { width: calc(100% - 8px) !important; }
+.theia-FileTree .theia-TreeNodeSegmentGrow { line-height: 34px !important; }
+.theia-TreeNode.theia-mod-selected, .theia-TreeNode.theia-mod-selected.theia-mod-focus { background: var(--ws-card2) !important; outline: 0 !important; }
+.theia-TreeNode:hover { background: var(--ws-hover) !important; }
+.theia-FileTree .theia-TreeNodeContent > .theia-file-icons-js::before { font-size: 18px !important; }
+/* tab strip: pills instead of an underlined band */
+#theia-main-content-panel > .lm-DockPanel .lm-TabBar[data-orientation=horizontal], #theia-main-content-panel .lm-TabBar.theia-app-centers {
+  height: 52px !important; min-height: 52px !important; max-height: 52px !important; border-bottom: 0 !important; background: transparent !important; padding: 0 10px !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-content { align-items: center !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab {
+  height: 34px !important; min-height: 34px !important; max-height: 34px !important; margin: 0 4px 0 0 !important; padding: 0 14px !important;
+  border-radius: 10px !important; color: var(--ws-faint) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab:hover { background: var(--ws-hover) !important; color: var(--ws-text) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current { background: var(--ws-card2) !important; color: var(--ws-text) !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tab.lm-mod-current::after { display: none !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-tabLabel { font: 500 14px Satoshi, system-ui !important; }
+/* editor surface = card */
+.monaco-editor, .monaco-editor .monaco-editor-background, .monaco-editor .margin, .theia-editor, .monaco-editor .overflow-guard { background-color: var(--ws-card) !important; }
+.monaco-editor .view-lines { padding-left: 8px; }
+/* footer: no rules, 40px rows */
+#workspace-footer { background: var(--ws-card) !important; border-top: 0 !important; padding: 0 6px 6px; }
+#workspace-footer .workspace-settings { border-top: 0 !important; padding: 4px 4px 6px !important; }
+#workspace-footer .workspace-running:before { text-transform: none; letter-spacing: 0; font: 600 13px/1 Satoshi, system-ui; color: var(--ws-text); padding: 10px 0 8px 6px; }
+.ws-settings-btn { border: 0 !important; border-radius: 10px !important; padding: 10px 12px !important; }
+.ws-settings-btn:hover { background: var(--ws-hover) !important; }
+#workspace-footer .ws-row, #workspace-footer .workspace-running a, #workspace-footer .workspace-running button { border-radius: 10px; }
+/* type: 14px baseline everywhere our own widgets speak */
+.ws-row, .ws-settings, .workspace-running, .ws-settings-menu, .ws-modal { font-size: 14px; }
+.theia-TreeNode, .theia-TreeNode.theia-mod-focus, .theia-Tree:focus .theia-TreeNode, .theia-Tree:focus-within .theia-TreeNode.theia-mod-selected { outline: 0 !important; box-shadow: none !important; border-color: transparent !important; }
+/* page/card colours per theme (the webview + Monaco surfaces come from the matching theme JSON) */
+body.ws-theme-navy  { --ws-bg: #071627; --ws-card: #0a1c2e; --ws-card2: #0f2133; --ws-navy: #0a1c2e; --ws-rail: #0a1c2e; --ws-hover: #0f2133; --ws-selected: #0f2133; }
+/* light = "Paper": warm grey page, off-white cards; hairlines on the cards and on floating things */
+body.ws-theme-light { --ws-bg: #e9e6df; --ws-card: #f7f5f0; --ws-card2: #ebe8e1; --ws-navy: #f7f5f0; --ws-rail: #f7f5f0; --ws-panel: #f7f5f0; --ws-panel2: #ebe8e1;
+  --ws-hover: #efece6; --ws-selected: #ebe8e1; --ws-text: #1d1c1a; --ws-muted: #6b675f; --ws-faint: #948f85; --ws-border: #dedad1; --ws-border-strong: #c9c4b8;
+  --ws-ok: #15803d; --ws-shadow: rgba(40,35,25,.14); --ws-backdrop: rgba(40,35,25,.35); }
+body.ws-theme-light #workspace-topbar #workspace-app-chip:not([hidden]) { background: rgba(21,128,61,.12); }
+body.ws-theme-light #workspace-topbar #workspace-app-chip:hover { background: rgba(21,128,61,.2); }
+
+#theia-left-content-panel .theia-TreeNode.theia-mod-selected, #theia-left-content-panel .theia-TreeNode.theia-mod-selected.theia-mod-focus { box-shadow: none !important; }
+/* Claude card title row; the webview (BoxPanel) is pushed below it like the brand bar in the sidebar */
+#workspace-claude-head { position: absolute; top: 0; left: 0; right: 0; height: 52px; z-index: 6; display: flex; align-items: center; gap: 10px; padding: 0 18px; background: transparent; pointer-events: none; }  /* overlays the webview's own toolbar row (icons top-right, empty on the left) */
+/* Claude's own clay orange; OpenCode is purple (below, and --oc-accent in opencode.css) — never the same colour */
+.ws-claude-dot { width: 10px; height: 10px; border-radius: 999px; background: linear-gradient(135deg, #e8956f, #d97757); flex: none; }
+.ws-claude-title { font: 600 14px Satoshi, system-ui; color: var(--ws-text); }
+/* mobile: full-bleed panels (no gutters/radii — every pixel counts), no Claude title next to the menu button */
+body.ws-mobile #theia-left-content-panel, body.ws-mobile #theia-main-content-panel, body.ws-mobile #theia-right-content-panel {
+  border-width: 0 !important; border-radius: 0 !important; overflow: visible !important; }
+body.ws-mobile #workspace-claude-head { display: none !important; }
+
+/* ==== TOP BAR (direction A): brand · [Editor|Claude on phones] · Open app · settings, above the cards ==== */
+#workspace-topbar { position: fixed; top: 0; left: 0; right: 0; height: 56px; z-index: 1000; display: flex; align-items: center; gap: 10px; padding: 0 16px 0 14px; background: var(--ws-bg); transition: opacity .22s ease; }
+body.ws-booting #workspace-topbar { opacity: 0; pointer-events: none; }
+#workspace-topbar > div { display: flex; align-items: center; }
+#workspace-topbar .ws-tb-spacer { flex: 1; }
+#theia-app-shell, .theia-ApplicationShell { top: 56px !important; height: calc(100% - 56px) !important; }
+/* the brand moved out of the sidebar card */
+#workspace-topbar #workspace-brand-bar { position: static !important; height: auto !important; padding: 0 !important; margin: 0 6px 0 4px; background: transparent !important; border: 0 !important; z-index: auto; display: flex; align-items: center; gap: 10px; }
+#workspace-topbar #workspace-brand-bar .ws-word { font: 600 16px Satoshi, system-ui; letter-spacing: -0.015em; color: var(--ws-text); }
+#theia-left-content-panel > .lm-BoxPanel { top: 0 !important; height: 100% !important; }
+/* Open app: green pill, on every screen size (was mobile-only) */
+#workspace-topbar #workspace-app-chip:not([hidden]) { display: inline-flex !important; position: static !important; align-items: center; gap: 8px; height: 36px; padding: 0 14px 0 12px; border-radius: 999px;
+  background: rgba(70,212,138,.12); color: var(--ws-ok); font: 500 14px Satoshi, system-ui; text-decoration: none; cursor: pointer; }
+#workspace-topbar #workspace-app-chip:hover { background: rgba(70,212,138,.2); }
+#workspace-topbar #workspace-app-chip .ws-ext { display: none; }
+#workspace-topbar #workspace-app-chip .ws-dot { width: 8px; height: 8px; }
+body.ws-mobile.ws-mobile-editor #workspace-topbar #workspace-app-chip:not([hidden]), body.ws-mobile.ws-sidebar-open #workspace-topbar #workspace-app-chip:not([hidden]) { display: inline-flex !important; }
+body.ws-mobile #workspace-topbar #workspace-app-chip .ws-chip-label { display: none; }
+body.ws-mobile #workspace-topbar #workspace-app-chip { padding: 0 12px; }
+body.ws-mobile #workspace-topbar #workspace-app-chip .ws-ext { display: inline; color: var(--ws-ok); }
+/* settings: the widget's button becomes a round gear; its menu drops down under it */
+#workspace-tb-settings .workspace-settings, #workspace-tb-settings .ws-settings, #workspace-tb-settings .ws-settings-anchor { display: block; }
+#workspace-tb-settings .ws-settings-btn { width: 36px !important; height: 36px; padding: 0 !important; gap: 0 !important; border: 0 !important; border-radius: 999px !important; background: var(--ws-card) !important; color: transparent !important; font-size: 0 !important; position: relative; display: inline-flex; align-items: center; justify-content: center; }
+#workspace-tb-settings .ws-settings-btn:hover { background: var(--ws-card2) !important; }
+#workspace-tb-settings .ws-settings-btn > * { display: none !important; }
+#workspace-tb-settings .ws-settings-btn::before { content: ""; width: 18px; height: 18px; background: var(--ws-muted);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M21.86 10.36L21.86 13.64L19.38 13.83L18.51 15.92L20.14 17.81L17.81 20.14L15.92 18.51L13.83 19.38L13.64 21.86L10.36 21.86L10.17 19.38L8.08 18.51L6.19 20.14L3.86 17.81L5.49 15.92L4.62 13.83L2.14 13.64L2.14 10.36L4.62 10.17L5.49 8.08L3.86 6.19L6.19 3.86L8.08 5.49L10.17 4.62L10.36 2.14L13.64 2.14L13.83 4.62L15.92 5.49L17.81 3.86L20.14 6.19L18.51 8.08L19.38 10.17Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center / 18px 18px no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linejoin='round'%3E%3Cpath d='M21.86 10.36L21.86 13.64L19.38 13.83L18.51 15.92L20.14 17.81L17.81 20.14L15.92 18.51L13.83 19.38L13.64 21.86L10.36 21.86L10.17 19.38L8.08 18.51L6.19 20.14L3.86 17.81L5.49 15.92L4.62 13.83L2.14 13.64L2.14 10.36L4.62 10.17L5.49 8.08L3.86 6.19L6.19 3.86L8.08 5.49L10.17 4.62L10.36 2.14L13.64 2.14L13.83 4.62L15.92 5.49L17.81 3.86L20.14 6.19L18.51 8.08L19.38 10.17Z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E") center / 18px 18px no-repeat; }
+#workspace-tb-settings .ws-settings-btn:hover::before { background: var(--ws-text); }
+#workspace-tb-settings .ws-settings-inline { top: calc(100% + 8px); bottom: auto; left: auto; right: 0; width: 300px; box-shadow: 0 12px 40px var(--ws-shadow); }
+/* phones: the bar hosts the menu button and the (always centred) switch; the drawer starts under the bar */
+#workspace-topbar #workspace-menu-btn { position: static !important; left: auto !important; top: auto !important; }
+body.ws-mobile.ws-sidebar-open #workspace-topbar #workspace-menu-btn { left: auto !important; }
+#workspace-topbar #workspace-mobile-switch:not([hidden]) { position: absolute !important; top: 50% !important; left: 50% !important; right: auto !important; transform: translate(-50%, -50%) !important; }
+body.ws-mobile.ws-sidebar-open #workspace-topbar #workspace-mobile-switch:not([hidden]) { display: inline-flex !important; }
+body.ws-mobile #workspace-topbar #workspace-brand-bar .ws-word { display: none; }
+body.ws-mobile #theia-left-content-panel { top: 56px !important; height: calc(100% - 56px) !important; }
+body.ws-mobile #workspace-backdrop { top: 56px; }
+#workspace-tb-settings, #workspace-tb-settings .lm-Widget, #workspace-tb-settings .ws-settings { overflow: visible !important; }   /* the widget node is overflow:hidden inline; the menu hangs below it */
+/* header rows: 52px in all three cards (mockup) so "Your files", the tab pill and "Claude" share one line */
+#theia-main-content-panel > .lm-DockPanel .lm-TabBar[data-orientation=horizontal], #theia-main-content-panel .lm-TabBar.theia-app-centers { height: 52px !important; min-height: 52px !important; max-height: 52px !important; }
+#theia-left-content-panel .theia-view-container-part-header { height: 52px !important; padding-left: 18px !important; }
+#workspace-claude-head { height: 52px; }
+/* tab strip: centre the (34px) tab row in the 52px bar instead of Theia's bottom alignment */
+#theia-main-content-panel > .lm-DockPanel .lm-TabBar[data-orientation=horizontal], #theia-main-content-panel .lm-TabBar.theia-app-centers { display: flex !important; flex-direction: column !important; justify-content: center !important; }
+#theia-main-content-panel .lm-TabBar[data-orientation=horizontal] .lm-TabBar-content { flex: none !important; margin: 0 !important; }
+/* "+" add button, square like the mockup */
+.ws-add-btn { width: 28px !important; height: 28px !important; padding: 0 !important; border-radius: 8px !important; display: inline-flex !important; align-items: center; justify-content: center; font: 400 20px/1 Satoshi, system-ui, sans-serif !important; }
+#theia-left-content-panel .theia-view-container-part-header { padding-right: 14px !important; }
+.theia-horizontal-tabBar-hover-caption { display: none !important; }   /* belt and braces: never show a path in a tab hover */
+/* several apps running: list under the Open app pill */
+#workspace-tb-chip { position: relative; }
+#workspace-app-menu:not([hidden]) { position: absolute; top: calc(100% + 8px); right: 0; min-width: 200px; display: flex; flex-direction: column; gap: 2px; padding: 6px; background: var(--ws-panel); border: 1px solid var(--ws-border); border-radius: 12px; box-shadow: 0 12px 40px var(--ws-shadow); z-index: 30; }
+#workspace-app-menu a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; color: var(--ws-text); text-decoration: none; font: 500 14px Satoshi, system-ui; }
+#workspace-app-menu a:hover { background: var(--ws-hover); }
+#workspace-app-menu a .ws-dot { width: 8px; height: 8px; }
+#workspace-app-menu a .ws-ext { margin-left: auto; color: var(--ws-muted); }
+#workspace-tb-settings .lm-Widget, #workspace-tb-settings .ws-settings, #workspace-tb-settings .ws-settings-anchor { display: flex !important; align-items: center; height: 36px; }   /* gear sits on the pill's centre line */
+#workspace-tb-settings .ws-settings-btn::before { width: 20px; height: 20px; -webkit-mask-size: 20px 20px; mask-size: 20px 20px; }
+/* light: a hairline on the cards, drawn as an overlay (an inset shadow would be hidden by Monaco and the Claude iframe) */
+body.ws-theme-light #theia-left-content-panel::after, body.ws-theme-light #theia-main-content-panel::after, body.ws-theme-light #theia-right-content-panel::after {
+  content: ""; position: absolute; inset: 0; border-radius: 14px; box-shadow: inset 0 0 0 1px var(--ws-border); pointer-events: none; z-index: 10; }
+.monaco-editor .decorationsOverviewRuler { display: none !important; }   /* the 14px ruler canvas paints a grey column on light themes */
+#workspace-tb-settings .ps__rail-x, #workspace-tb-settings .ps__rail-y { display: none !important; }   /* the widget node is a perfect-scrollbar container; the gear never scrolls */
+#workspace-tb-settings, #workspace-tb-settings .lm-Widget, #workspace-tb-settings .ws-settings, #workspace-tb-settings .ws-settings-anchor { overflow: visible !important; }   /* never clip: the dropdown hangs below the node */
+/* sidebar footer: Terminal + account rows */
+#workspace-footer-extra { display: flex; flex-direction: column; gap: 2px; padding: 6px 4px 4px; }
+.ws-foot-row { display: flex; align-items: center; gap: 10px; height: 40px; width: 100%; padding: 0 10px; border: 0; border-radius: 10px; background: none; color: var(--ws-muted); font: 500 14px Satoshi, system-ui; text-align: left; cursor: pointer; }
+.ws-foot-row:hover { background: var(--ws-hover); color: var(--ws-text); }
+.ws-foot-row svg { width: 16px; height: 16px; flex: none; }
+.ws-foot-acct { height: 48px; }
+.ws-avatar { width: 28px; height: 28px; border-radius: 999px; background: linear-gradient(135deg, var(--ws-pink), var(--ws-purple)); color: #fff; font: 700 11px Satoshi, system-ui; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+.ws-acct-text { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.ws-acct-name { color: var(--ws-text); font-weight: 600; }
+.ws-acct-sub { font-size: 12px; color: var(--ws-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* accounts menu pops up above the profile row */
+#workspace-footer-extra { position: relative; }
+#workspace-footer-extra .ws-accounts-menu { left: 4px; right: 4px; bottom: calc(100% - 2px); }
+.ws-foot-row svg { width: 28px; height: 28px; padding: 6px; box-sizing: border-box; }   /* same box as the avatar: icon and text columns line up */
+/* "your turn": the Claude title dot pulses until the user interacts */
+@keyframes ws-attn { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.5); opacity: .55; } }
+.ws-claude-dot.ws-attn { animation: ws-attn 1.2s ease-in-out infinite; }
+
+/* ==== Settings menu captions + the Assistant toggle (Claude | OpenCode, see assistant.ts) ==== */
+.ws-menu-cap { padding: 8px 12px 0; font: 500 11px Satoshi, system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--ws-faint); }
+.ws-assist-hint { margin: 0; padding: 2px 12px 6px; line-height: 1.35; }
+.ws-theme-pick:disabled { opacity: .6; cursor: default; }
+/* OpenCode's card paints its own title row (style/opencode.css); its dot is purple, the same as --oc-accent */
+body.ws-assistant-opencode .ws-claude-dot { background: linear-gradient(135deg, #c084fc, #a855f7); }

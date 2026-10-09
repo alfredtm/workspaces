@@ -1,0 +1,34 @@
+{
+  "name": "workspaces-theme",
+  "displayName": "Workspaces Themes",
+  "publisher": "workspaces",
+  "version": "0.0.3",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Themes"
+  ],
+  "contributes": {
+    "themes": [
+      {
+        "id": "workspaces-dark",
+        "label": "Dark",
+        "uiTheme": "vs-dark",
+        "path": "./themes/dark.json"
+      },
+      {
+        "id": "workspaces-navy",
+        "label": "Navy",
+        "uiTheme": "vs-dark",
+        "path": "./themes/navy.json"
+      },
+      {
+        "id": "workspaces-light",
+        "label": "Light",
+        "uiTheme": "vs",
+        "path": "./themes/light.json"
+      }
+    ]
+  }
+}

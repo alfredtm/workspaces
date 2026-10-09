@@ -1,0 +1,93 @@
+{
+  "private": true,
+  "name": "workspaces-theia-app",
+  "version": "0.0.1",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@theia/core": "1.75.0",
+    "@theia/editor": "1.75.0",
+    "@theia/filesystem": "1.75.0",
+    "@theia/markers": "1.75.0",
+    "@theia/messages": "1.75.0",
+    "@theia/monaco": "1.75.0",
+    "@theia/navigator": "1.75.0",
+    "@theia/preferences": "1.75.0",
+    "@theia/process": "1.75.0",
+    "@theia/terminal": "1.75.0",
+    "@theia/variable-resolver": "1.75.0",
+    "@theia/workspace": "1.75.0",
+    "@theia/plugin-ext": "1.75.0",
+    "@theia/plugin-ext-vscode": "1.75.0",
+    "workspace-theia": "file:./workspace-theia"
+  },
+  "devDependencies": {
+    "@theia/cli": "1.75.0",
+    "typescript": "~5.9.3"
+  },
+  "overrides": {
+    "dompurify": "^3.4.14",
+    "qs": "^6.16.0",
+    "@tootallnate/once": "^2.0.1",
+    "uuid": "^11.1.1",
+    "serialize-javascript": "^7.0.5"
+  },
+  "theia": {
+    "target": "browser",
+    "frontend": {
+      "config": {
+        "applicationName": "Workspaces",
+        "defaultTheme": "dark",
+        "preferences": {
+          "window.menuBarVisibility": "compact",
+          "workbench.colorTheme": "workspaces-dark",
+          "files.enableTrash": false,
+          "explorer.autoReveal": true,
+          "breadcrumbs.enabled": false,
+          "editor.minimap.enabled": false,
+          "security.workspace.trust.enabled": false,
+          "workbench.tree.renderIndentGuides": "always",
+          "explorer.compactFolders": false,
+          "workbench.tree.indent": 6,
+          "workbench.iconTheme": "material-icon-theme",
+          "window.title": "Workspaces",
+          "editor.lineNumbers": "off",
+          "chat.fontSize": 14,
+          "editor.padding.top": 14,
+          "editor.hideCursorInOverviewRuler": true,
+          "editor.overviewRulerBorder": false,
+          "editor.glyphMargin": false
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build:ext": "tsc -p workspace-theia",
+    "build": "npm run build:ext && theia build --mode production",
+    "start": "theia start --hostname 0.0.0.0 --port 3000 --plugins=local-dir:plugins ${WS_ROOT:-/tmp/ws}"
+  },
+  "description": "Workspaces editor: Eclipse Theia app + workspace-theia extension (see README.md)",
+  "theiaPluginsDir": "plugins",
+  "theiaPlugins": {
+    "eclipse-theia.builtin-extension-pack": "https://open-vsx.org/api/eclipse-theia/builtin-extension-pack/1.104.0/file/eclipse-theia.builtin-extension-pack-1.104.0.vsix",
+    "ms-python.python": "https://open-vsx.org/api/ms-python/python/2026.4.0/file/ms-python.python-2026.4.0.vsix",
+    "golang.go": "https://open-vsx.org/api/golang/Go/0.56.1/file/golang.Go-0.56.1.vsix",
+    "redhat.vscode-yaml": "https://open-vsx.org/api/redhat/vscode-yaml/1.25.2026090108/file/redhat.vscode-yaml-1.25.2026090108.vsix"
+  },
+  "theiaPluginsExcludeIds": [
+    "vscode.github-authentication",
+    "vscode.microsoft-authentication",
+    "vscode.github",
+    "vscode.ipynb",
+    "vscode.builtin-notebook-renderers",
+    "vscode.extension-editing",
+    "vscode.debug-auto-launch",
+    "vscode.debug-server-ready",
+    "vscode.simple-browser",
+    "vscode.media-preview",
+    "ms-python.vscode-pylance",
+    "vscode.terminal-suggest",
+    "vscode.prompt"
+  ]
+}

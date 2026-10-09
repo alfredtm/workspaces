@@ -1,0 +1,11 @@
+[core]
+    autocrlf = input
+    editor = vim
+[pull]
+    rebase = false
+[init]
+    defaultBranch = main
+[alias]
+    st = status
+    co = checkout
+    br = branch

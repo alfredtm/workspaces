@@ -1,0 +1,123 @@
+/* Preview pane (preview-widget.tsx), the Files strip and the top bar toggles. Colours from the --ws-* theme variables. */
+
+/* The Preview covers the whole main area — the file tabs included — while it is on (layout-contribution.ts
+   setPreview); the files stay open underneath and are back when it is turned off or a file is opened. */
+/* Same surface as the code window it covers: --ws-navy, like #theia-main-content-panel (workspace.css). */
+#workspace-preview-host { display: none; position: absolute; inset: 0; z-index: 20; background: var(--ws-navy); }
+body.ws-preview-on #workspace-preview-host { display: block; }
+#workspace-preview-host > .workspace-preview { position: absolute; inset: 0; width: 100%; height: 100%; }
+.workspace-preview { background: var(--ws-navy); }
+.ws-pv { display: flex; flex-direction: column; height: 100%; min-height: 0; background: var(--ws-navy); }
+.ws-pv:fullscreen { background: var(--ws-navy); }
+
+/* toolbar: what is shown on the left, actions on the right — the same 52px borderless band as the editor's tab
+   strip (workspace.css "tab strip: pills instead of an underlined band"), so switching Preview on/off doesn't jump */
+/* Header spec shared by the three cards (Your files, OpenCode, Preview): 52px, the first text 18px in, the title
+   600/14px, secondary text 13px, icon buttons 28px. The picker has 10px padding of its own → the bar starts at 8px. */
+.ws-pv-bar { display: flex; align-items: center; gap: 8px; height: 52px; flex: none; padding: 0 14px 0 8px; background: transparent; }
+.ws-pv-pick { position: relative; min-width: 0; flex: 1; }
+.ws-pv-src { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; height: 28px; padding: 0 10px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--ws-text); font: 600 14px Satoshi, system-ui, sans-serif; cursor: pointer; }
+/* no focus ring after a mouse click (it read as a border around the name); keyboard focus keeps a subtle one */
+.ws-pv-src:focus, .ws-pv-btn:focus { outline: none; }
+.ws-pv-src:focus-visible, .ws-pv-btn:focus-visible { outline: 2px solid var(--ws-border-strong); outline-offset: 1px; }
+.ws-pv-src:not(:disabled):hover { background: var(--ws-hover); }
+.ws-pv-src:disabled { cursor: default; }
+.ws-pv-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* the port (":4000") or the file of a titled page, after the name: small and quiet */
+.ws-pv-sub { flex: none; color: var(--ws-faint); font-size: 12px; font-weight: 500; font-variant-numeric: tabular-nums; }
+/* the dropdown's rows stay at body size; only the header shows the name as a title */
+.ws-pv-menu .ws-pv-label { font-weight: 500; font-size: 13px; }
+.ws-pv-menu .ws-pv-sub { margin-left: auto; padding-left: 12px; }
+/* a real chevron, so "several apps — pick one" reads as a dropdown */
+.ws-pv-caret { display: inline-flex; color: var(--ws-muted); margin-left: -2px; transition: transform .15s; }
+.ws-pv-src:not(:disabled):hover .ws-pv-caret { color: var(--ws-text); }
+.ws-pv .ws-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ws-ok); }
+.ws-pv .ws-dot.is-file { background: var(--ws-purple); }
+.ws-pv-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 20; min-width: 240px; max-width: 420px; padding: 4px;
+  border: 1px solid var(--ws-border); border-radius: 10px; background: var(--ws-panel); box-shadow: 0 12px 40px var(--ws-shadow); }
+.ws-pv-menu button { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border: 0; border-radius: 6px; background: transparent;
+  color: var(--ws-text); font: 13px Satoshi, system-ui, sans-serif; text-align: left; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-pv-menu button:hover, .ws-pv-menu button.is-on { background: var(--ws-hover); }
+/* the ⋯ menu: hangs from the right edge; its items are buttons and one link, all laid out alike */
+.ws-pv-more { position: relative; }
+.ws-pv-menu--right { left: auto; right: 0; min-width: 190px; }
+.ws-pv-menu a { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; color: var(--ws-text);
+  font: 13px Satoshi, system-ui, sans-serif; text-decoration: none; }
+.ws-pv-menu a:hover { background: var(--ws-hover); }
+.ws-pv-menu svg { flex: none; color: var(--ws-faint); }
+
+.ws-pv-actions { display: flex; align-items: center; gap: 2px; flex: none; }
+.ws-pv-btn { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--ws-faint); font-size: 15px; line-height: 1; text-decoration: none; cursor: pointer; transition: background .15s, color .15s; }
+.ws-pv-btn:hover, .ws-pv-btn.is-on { background: var(--ws-hover); color: var(--ws-text); }
+.ws-pv-btn:disabled, .ws-pv-btn.is-disabled { opacity: .35; pointer-events: none; }
+
+/* the app itself: full width, or a phone-sized frame in the middle */
+.ws-pv-stage { flex: 1; min-height: 0; display: flex; justify-content: center; background: var(--ws-navy); }
+/* The thin scrollbar inside comes from the page itself: the agent (/preview/) and authproxy add it to HTML shown in
+   a frame. No color-scheme here: when the frame's scheme differs from the page's, Chrome paints an opaque canvas
+   (white for a page that declares none) behind the page, and the scrollbar's transparent track showed it. */
+.ws-pv-frame { flex: 1; width: 100%; height: 100%; border: 0; background: #fff; }
+.ws-pv-stage.is-phone { padding: 20px 0; }
+.ws-pv-stage.is-phone .ws-pv-frame { flex: none; width: 390px; max-width: 100%; border-radius: 22px; border: 1px solid var(--ws-border-strong); box-shadow: 0 12px 40px var(--ws-shadow); }
+
+.ws-pv-empty { align-self: center; max-width: 340px; padding: 24px; text-align: center; color: var(--ws-muted); font: 14px/1.5 Satoshi, system-ui, sans-serif; }
+.ws-pv-empty-title { margin-bottom: 6px; color: var(--ws-text); font-weight: 600; font-size: 16px; }
+.ws-pv-empty p { margin: 0; }
+
+/* ── top bar: the Preview toggle (layout-contribution.ts mountViewToggles) ─────────────────────── */
+.ws-tb-toggle { display: inline-flex; align-items: center; gap: 6px; height: 32px; min-width: 32px; margin-right: 8px; padding: 0 7px; border: 0;
+  border-radius: 8px; background: transparent; color: var(--ws-faint); font: 500 13px Satoshi, system-ui, sans-serif; cursor: pointer;
+  transition: background .15s, color .15s; position: relative; }
+.ws-tb-toggle:hover { background: var(--ws-hover); color: var(--ws-text); }
+.ws-tb-toggle.is-on { color: var(--ws-text); background: var(--ws-hover); }
+.ws-tb-toggle--label { padding: 0 10px 0 8px; }
+
+/* ── Files: the hide button in its header, and the 56px strip it collapses to (applyFilesHidden) ─────────── */
+.ws-files-hide { color: var(--ws-faint) !important; }
+.ws-files-hide svg { display: block; }
+#workspace-files-strip { display: none; }
+/* workspace.css pins the column to 280px (min- and max-width !important); the strip is 56px */
+body.ws-files-hidden:not(.ws-mobile) #theia-left-content-panel { min-width: 56px !important; max-width: 56px !important; }
+body.ws-files-hidden #workspace-files-strip { position: absolute; inset: 0; z-index: 30; display: flex; flex-direction: column; align-items: center;
+  padding: 12px 0; background: var(--ws-rail, var(--ws-navy)); }
+/* the tree and the footer stay mounted underneath (the Running poll feeds the Preview) but out of sight and reach */
+body.ws-files-hidden #theia-left-content-panel > :not(#workspace-files-strip) { visibility: hidden; }
+.ws-strip-spacer { flex: 1; }
+.ws-strip-settings { margin-bottom: 4px; }
+
+/* ── Settings: a footer row above the profile row; its menus float on the page (settings-widget.tsx floatStyle) ── */
+#workspace-footer .workspace-settings { padding: 6px 4px 0 !important; border-top: 0 !important; }
+#workspace-footer .ws-settings-btn.ws-foot-row { width: 100%; height: 40px; border: 0 !important; background: none; color: var(--ws-muted); gap: 10px; }
+#workspace-footer .ws-settings-btn.ws-foot-row:hover { background: var(--ws-hover); color: var(--ws-text); border: 0 !important; }
+.ws-settings-float { position: fixed; z-index: 1000; }
+.ws-settings-float .ws-settings-inline { position: static !important; left: auto; right: auto; top: auto; bottom: auto; width: 100%;
+  box-shadow: 0 12px 40px var(--ws-shadow); }
+.ws-strip-btn { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--ws-faint); cursor: pointer; transition: background .15s, color .15s; }
+.ws-strip-btn:hover { background: var(--ws-hover); color: var(--ws-text); }
+.ws-strip-btn:focus { outline: none; }
+.ws-strip-btn:focus-visible { outline: 2px solid var(--ws-border-strong); outline-offset: 1px; }
+.ws-strip-acct .ws-avatar { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 999px;
+  background: var(--ws-grad, var(--ws-purple)); color: #fff; font: 600 10px Satoshi, system-ui, sans-serif; }
+/* something to show while the tab is closed: a quiet dot; something NEW while you work on code: a green one */
+#workspace-tb-preview.has-sources:not(.is-on)::after, #workspace-tb-preview.has-news::after { content: ""; position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; border-radius: 50%; background: var(--ws-faint); }
+#workspace-tb-preview.has-news::after, #workspace-tb-preview.has-app:not(.is-on)::after { background: var(--ws-ok); }
+/* One button for "look at my app": on desktop the Preview (with its picker when several run, and "open in a new
+   tab" in its toolbar) replaces the Open app pill; phones have no Preview and keep the pill. */
+body:not(.ws-mobile) #workspace-tb-chip { display: none !important; }
+/* …and the sidebar's "Running" list likewise: the Preview button and its picker cover it. The widget stays mounted
+   (its port poll feeds the Preview and the pill); phones keep the list. */
+body:not(.ws-mobile) #workspace-footer .workspace-running { display: none !important; }
+/* The Terminal row moved into the gear menu (settings-widget.tsx): the footer is just the profile row. */
+#workspace-footer .ws-foot-term { display: none !important; }
+
+/* ── top bar: one style for every button (Preview, the gear) — quiet, no filled circles ── */
+#workspace-tb-settings .ws-settings-btn { width: 32px !important; height: 32px; border-radius: 8px !important; background: transparent !important; }
+#workspace-tb-settings .ws-settings-btn:hover { background: var(--ws-hover) !important; }
+#workspace-tb-settings .ws-settings-btn::before { background: var(--ws-faint) !important; }
+#workspace-tb-settings .ws-settings-btn:hover::before { background: var(--ws-text) !important; }
+/* phones: one pane at a time already — no Preview toggle, no Files strip */
+body.ws-mobile #workspace-tb-preview, body.ws-mobile #workspace-files-strip { display: none !important; }

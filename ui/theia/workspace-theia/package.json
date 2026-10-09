@@ -1,0 +1,18 @@
+{
+  "name": "workspace-theia",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Workspaces shell for Theia: layout, branding, Running + Settings views, agent proxy.",
+  "main": "lib/browser/workspace-frontend-module.js",
+  "files": ["lib", "src"],
+  "dependencies": {
+    "@theia/core": "1.75.0",
+    "@theia/navigator": "1.75.0",
+    "@theia/terminal": "1.75.0",
+    "@theia/workspace": "1.75.0",
+    "@theia/filesystem": "1.75.0"
+  },
+  "theiaExtensions": [
+    { "frontend": "lib/browser/workspace-frontend-module", "backend": "lib/node/workspace-backend-module" }
+  ]
+}

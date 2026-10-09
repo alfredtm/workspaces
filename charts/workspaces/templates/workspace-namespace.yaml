@@ -1,0 +1,60 @@
+{{- $wsns := include "workspaces.workspaceNamespace" . }}
+{{- if .Values.networkPolicy.enabled }}
+# Only the port-router reaches workspace pods (their authproxy on 8080).
+# Egress stays open: workspaces clone, install packages and call APIs.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: workspaces-ingress
+  namespace: {{ $wsns }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/managed-by: workspaces
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Release.Namespace }}
+          podSelector:
+            matchLabels:
+              app: port-router
+      ports:
+        - port: 8080
+          protocol: TCP
+{{- end }}
+{{- with .Values.resourceQuota }}
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: workspaces
+  namespace: {{ $wsns }}
+  labels:
+    {{- include "workspaces.labels" $ | nindent 4 }}
+spec:
+  hard:
+    {{- toYaml . | nindent 4 }}
+{{- end }}
+---
+# Defaults for anything that lands in the namespace without resources, so a
+# quota never rejects it. Workspace pods set their own.
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: workspaces
+  namespace: {{ $wsns }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 250m
+        memory: 512Mi
+      default:
+        cpu: "2"
+        memory: 4Gi

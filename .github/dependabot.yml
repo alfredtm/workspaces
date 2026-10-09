@@ -1,0 +1,96 @@
+# Dependency updates: daily checks with a 3-day cooldown (skips releases
+# younger than 3 days) and minor+patch grouped into one PR per ecosystem.
+#
+# versions.txt (the tooling pinned into the images) is not a Dependabot
+# ecosystem; bump it by hand.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directories:
+      - /services/manager
+      - /services/authproxy
+      - /services/port-router
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      go-minor-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: npm
+    directories:
+      - /ui/portal
+      - /services/shell
+      - /services/pi
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "build(deps)"
+    # TypeScript majors (7 = the Go-port rewrite) wait for the toolchain around them.
+    ignore:
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+    groups:
+      npm-minor-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: npm
+    directory: /ui/theia
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "build(deps)"
+    # Theia is pinned to one exact version across every @theia/* package and a
+    # bump needs a lab run (native modules, plugin compatibility). Leave those
+    # to a deliberate PR; Dependabot still handles overrides and dev deps.
+    ignore:
+      - dependency-name: "@theia/*"
+      # Theia 1.75 compiles with typescript ~5.4; majors need the same lab run.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+    groups:
+      theia-minor-patch:
+        update-types:
+          - minor
+          - patch
+  - package-ecosystem: docker
+    directories:
+      - /images/workspace/base
+      - /images/workspace
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "build(deps)"
+    # Base-image majors are deliberate pins: ubuntu LTS for the workspace, Node 20
+    # for the Theia stage (native modules are ABI-bound and its binary ships in the
+    # image), and the golang tag must match go.mod's toolchain (bumped via versions.txt).
+    ignore:
+      - dependency-name: ubuntu   # LTS only, bumped by hand (24.10-style interim releases are not taken)
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
+      - dependency-name: golang
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+    cooldown:
+      default-days: 3
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      actions-minor-patch:
+        update-types:
+          - minor
+          - patch

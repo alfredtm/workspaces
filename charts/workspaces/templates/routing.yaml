@@ -1,0 +1,97 @@
+{{- $portal := include "workspaces.portalHost" . }}
+{{- $wild := printf "*.%s" .Values.domain }}
+{{- if eq .Values.routing.mode "ingress" }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: workspaces
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+  {{- with .Values.routing.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.routing.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.routing.ingress.tlsSecretName }}
+  tls:
+    - hosts:
+        - {{ $portal | quote }}
+        - {{ $wild | quote }}
+      secretName: {{ . }}
+  {{- end }}
+  rules:
+    # The exact portal host wins over the wildcard.
+    - host: {{ $portal | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: manager
+                port:
+                  name: http
+    - host: {{ $wild | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: port-router
+                port:
+                  name: http
+{{- else if eq .Values.routing.mode "gateway" }}
+{{- if not .Values.routing.gateway.name }}
+{{- fail "routing.gateway.name is required when routing.mode is gateway" }}
+{{- end }}
+{{- $parent := dict "name" .Values.routing.gateway.name "namespace" (.Values.routing.gateway.namespace | default .Release.Namespace) }}
+{{- with .Values.routing.gateway.sectionName }}{{ $_ := set $parent "sectionName" . }}{{ end }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: workspaces-portal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - {{- toYaml $parent | nindent 6 }}
+  hostnames:
+    - {{ $portal | quote }}
+  rules:
+    - backendRefs:
+        - name: manager
+          port: 80
+---
+# Gateway API wildcards cover exactly one leading label, which is what
+# <user>-<name> and <port>--<user>-<name> are. The exact portal route above
+# takes precedence.
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: workspaces-wildcard
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - {{- toYaml $parent | nindent 6 }}
+  hostnames:
+    - {{ $wild | quote }}
+  rules:
+    - backendRefs:
+        - name: port-router
+          port: 80
+      # The editor and dev servers stream (WebSockets, SSE, long downloads):
+      # no request timeout.
+      timeouts:
+        request: 0s
+        backendRequest: 0s
+{{- else }}
+{{- fail "routing.mode must be ingress or gateway" }}
+{{- end }}

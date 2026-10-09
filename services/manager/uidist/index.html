@@ -1,0 +1,16 @@
+<!doctype html>
+<!-- Placeholder. The real portal is built by `cd ui/portal && npm run build` (vite writes into this directory;
+     the image build does that). For development use the vite dev server instead:
+     `cd ui/portal && npm run dev` proxies /api and /auth to the manager. If you run `npm run build` locally,
+     this file gets overwritten — don't commit that. -->
+<html lang="en">
+  <head><meta charset="UTF-8" /><title>Workspaces — portal not built</title>
+  <style>body{font:15px/1.5 system-ui,sans-serif;max-width:40em;margin:4em auto;padding:0 1em;color:#222}code{background:#f2f2f2;padding:.1em .3em;border-radius:4px}</style></head>
+  <body>
+    <h1>Portal not built</h1>
+    <p>This manager is serving the repository's placeholder. For portal work run the dev server:</p>
+    <p><code>cd ui/portal &amp;&amp; npm ci &amp;&amp; npm run dev</code> → <a href="http://localhost:5173">http://localhost:5173</a></p>
+    <p>To embed a real build here: <code>cd ui/portal &amp;&amp; npm run build</code>, then restart the manager.</p>
+    <p>The API is up: <a href="/api/v1/me">/api/v1/me</a>, <a href="/healthz">/healthz</a>.</p>
+  </body>
+</html>

@@ -1,0 +1,13 @@
+# ko build config (.github/workflows/images.yml builds this module with
+# `ko build . --bare`). Static distroless base: ca-certificates + tzdata, no
+# shell, runs as nonroot. CGO off so the binary is fully static.
+defaultBaseImage: cgr.dev/chainguard/static:latest
+builds:
+  - id: port-router
+    main: .
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w

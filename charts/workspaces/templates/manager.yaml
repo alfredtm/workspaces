@@ -1,0 +1,122 @@
+{{- $portal := include "workspaces.portalHost" . }}
+{{- $wsns := include "workspaces.workspaceNamespace" . }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: manager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+    app: manager
+spec:
+  # Stateless (signed session cookies, activity kept in annotations), so
+  # several replicas are safe; the idle-stop loop is idempotent.
+  replicas: {{ .Values.manager.replicas }}
+  selector:
+    matchLabels:
+      app: manager
+  template:
+    metadata:
+      labels:
+        app: manager
+      annotations:
+        checksum/oidc: {{ printf "%s%s%s" .Values.oidc.issuer .Values.oidc.clientId .Values.oidc.clientSecret | sha256sum }}
+    spec:
+      serviceAccountName: manager
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels:
+                    app: manager
+      containers:
+        - name: manager
+          image: {{ include "workspaces.image" (list . .Values.manager.image "/manager") }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: {{ .Values.oidc.existingSecret | default "manager-oidc" }}
+            - secretRef:
+                name: {{ .Values.session.existingSecret | default "manager-session" }}
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PUBLIC_HOST
+              value: {{ $portal | quote }}
+            - name: OIDC_CALLBACK_URL
+              value: {{ printf "https://%s/auth/callback" $portal | quote }}
+            - name: ALLOWED_EMAIL_DOMAINS
+              value: {{ .Values.oidc.allowedEmailDomains | quote }}
+            - name: WORKSPACE_HOST
+              value: {{ printf "{user}.%s" .Values.domain | quote }}
+            - name: WORKSPACE_NAMESPACE
+              value: {{ $wsns | quote }}
+            - name: WORKSPACE_IMAGE
+              value: {{ include "workspaces.image" (list . .Values.workspace.image "") | quote }}
+            - name: MANAGER_URL
+              value: {{ printf "http://manager.%s.svc.cluster.local" .Release.Namespace | quote }}
+            - name: WORKSPACE_STORAGE_CLASS
+              value: {{ .Values.workspace.storageClass | quote }}
+            - name: WORKSPACE_STORAGE_SIZE
+              value: {{ .Values.workspace.storageSize | quote }}
+            - name: WORKSPACE_FS_GROUP
+              value: {{ .Values.workspace.fsGroup | toString | replace "<nil>" "" | quote }}
+            - name: WORKSPACE_RUN_AS_USER
+              value: {{ .Values.workspace.runAsUser | toString | replace "<nil>" "" | quote }}
+            - name: POSTGRES_IMAGE
+              value: {{ .Values.workspace.postgresImage | quote }}
+            - name: INFERENCE_SECRET
+              value: {{ include "workspaces.inferenceSecret" . | quote }}
+            - name: ACTIVE_LIMIT
+              value: {{ .Values.workspace.activeLimit | quote }}
+            - name: IDLE_TIMEOUT
+              value: {{ .Values.workspace.idleTimeout | quote }}
+            - name: START_TIMEOUT
+              value: {{ .Values.workspace.startTimeout | quote }}
+            - name: IDLE_WARN_DAYS
+              value: {{ .Values.workspace.idleWarnDays | quote }}
+            - name: IDLE_DELETE_DAYS
+              value: {{ .Values.workspace.idleDeleteDays | quote }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            {{- toYaml .Values.manager.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: manager
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "workspaces.labels" . | nindent 4 }}
+spec:
+  selector:
+    app: manager
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

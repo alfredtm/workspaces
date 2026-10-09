@@ -1,0 +1,17 @@
+apiVersion: v2
+name: workspaces
+description: Self-hosted, browser-based dev environments on Kubernetes — a Theia editor with Claude Code, OpenCode and Pi in every workspace.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/alfredtm/workspaces
+sources:
+  - https://github.com/alfredtm/workspaces
+keywords:
+  - development-environment
+  - ide
+  - theia
+  - claude-code
+  - opencode
+annotations:
+  artifacthub.io/license: MIT

@@ -1,0 +1,21 @@
+{
+  "name": "workspace-pi",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Pi (beta) for the workspace editor: an OpenCode-API server over Pi Durable, so the editor's assistant card runs on Pi.",
+  "license": "MIT",
+  "type": "module",
+  "main": "server.mjs",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@earendil-works/chord": "1.0.0",
+    "@earendil-works/pi-ai": "1.0.0",
+    "@earendil-works/pi-durable": "1.0.0"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "mode": "light",
+  "light": {
+    "background": {
+      "default": "#f7f5f0",
+      "subdued": "#ebe8e1",
+      "formfield": "#efece6"
+    }
+  }
+}

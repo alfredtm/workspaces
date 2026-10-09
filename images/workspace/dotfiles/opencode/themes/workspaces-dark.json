@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "mode": "dark",
+  "dark": {
+    "background": {
+      "default": "#141416",
+      "subdued": "#1e1e22",
+      "formfield": "#1a1a1d"
+    }
+  }
+}

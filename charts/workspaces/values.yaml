@@ -1,0 +1,128 @@
+# Workspaces Helm chart.
+#
+# The minimum to set: `domain` and `oidc`. Everything lands in the release
+# namespace (manager, port-router, image prepull) plus one namespace for the
+# workspaces themselves (`workspaceNamespace`).
+
+# Base domain. The portal is https://<portalLabel>.<domain>, each workspace
+# https://<user>-<name>.<domain>, and a port inside a workspace
+# https://<port>--<user>-<name>.<domain>. Point a wildcard DNS record
+# (*.<domain>) and a wildcard TLS certificate at your ingress or gateway.
+domain: ws.example.com
+portalLabel: portal
+
+# Login. Any OpenID Connect provider (Keycloak, Entra ID, Google, Dex, …).
+# Register the redirect URI https://<portalLabel>.<domain>/auth/callback.
+oidc:
+  issuer: ""            # e.g. https://login.example.com/realms/main
+  clientId: ""
+  clientSecret: ""      # empty for a public client (PKCE is always used)
+  # Use an existing Secret with keys OIDC_ISSUER, OIDC_CLIENT_ID,
+  # OIDC_CLIENT_SECRET instead of the values above.
+  existingSecret: ""
+  # Only these email domains may log in (comma list). Empty = anyone your
+  # identity provider lets through.
+  allowedEmailDomains: ""
+
+# Signing keys for the stateless session cookie. Generated on first install
+# and kept on upgrades; set existingSecret (keys SESSION_PRIVATE_KEY,
+# CSRF_KEY) to manage them yourself.
+session:
+  existingSecret: ""
+
+# Where workspace pods, disks and services live.
+workspaceNamespace:
+  name: workspaces-users
+  create: true
+
+image:
+  registry: ghcr.io/alfredtm/workspaces
+  tag: latest
+  pullPolicy: IfNotPresent
+
+manager:
+  replicas: 2
+  image: ""             # default <registry>/manager:<tag>
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { cpu: 500m, memory: 128Mi }
+
+portRouter:
+  replicas: 2
+  image: ""             # default <registry>/port-router:<tag>
+  resources:
+    requests: { cpu: 10m, memory: 32Mi }
+    limits: { cpu: "1", memory: 128Mi }
+
+workspace:
+  image: ""             # default <registry>:<tag>
+  storageClass: ""      # empty = the cluster default
+  storageSize: 10Gi
+  # Workspace pods run as uid 1000 with this fsGroup so the home volume is
+  # writable on any cluster. On OpenShift, set both to null: the restricted
+  # SCC assigns its own ids.
+  fsGroup: 1000
+  runAsUser: null
+  # Each user may have this many workspaces running at once.
+  activeLimit: 3
+  # Stop a workspace after this long without activity (open editor tabs and
+  # terminals count as activity).
+  idleTimeout: 30m
+  # A pod not ready this long after starting is given up on ("0" = never).
+  startTimeout: 10m
+  # Stopped workspaces unused for N days get a warning, then are deleted
+  # (disk included). "0" disables.
+  idleWarnDays: 7
+  idleDeleteDays: 14
+  postgresImage: quay.io/sclorg/postgresql-16-c9s:latest
+
+# Inference providers for OpenCode and Pi: any OpenAI-compatible API
+# (OpenAI, OpenRouter, vLLM, Ollama, Azure OpenAI, …). Claude Code uses each
+# user's own Claude login and needs nothing here. The values become env in
+# every workspace (LLM_*, LLM_2_*, …) through a Secret.
+inference:
+  providers: []
+  # - label: OpenRouter
+  #   baseUrl: https://openrouter.ai/api/v1
+  #   apiKey: sk-or-...
+  #   models: anthropic/claude-sonnet-4.5,qwen/qwen3-coder
+  #   context: ""        # context window in tokens (set with output)
+  #   output: ""         # max output tokens (set with context)
+  #   reasoning: ""      # off | low | medium | high | max
+  #   reasoningOptions: "" # JSON merged into requests, e.g. '{"chat_template_kwargs":{"enable_thinking":true}}'
+  #   images: ""         # regex of models that accept images
+  # See docs/inference.md.
+  # A Secret you manage yourself with the LLM_* keys instead.
+  existingSecret: ""
+
+# How traffic reaches the cluster. Pick one.
+routing:
+  # ingress: a standard Ingress (nginx, Traefik, HAProxy, …).
+  # gateway: Gateway API HTTPRoutes attached to an existing Gateway.
+  mode: ingress
+  ingress:
+    className: ""
+    annotations: {}
+    # Secret holding a certificate for *.<domain> (covers the portal too).
+    tlsSecretName: ""
+  gateway:
+    name: ""
+    namespace: ""
+    sectionName: ""
+
+# Standard Kubernetes NetworkPolicy for the workspace namespace: only the
+# port-router may reach workspace pods. Needs a CNI that enforces policies.
+networkPolicy:
+  enabled: true
+
+# Caps for the workspace namespace (empty = no quota).
+resourceQuota: {}
+#  requests.cpu: "36"
+#  requests.memory: 72Gi
+#  persistentvolumeclaims: "300"
+#  requests.storage: 3000Gi
+
+# Keeps the (large) workspace image warm on every node, so starting a
+# workspace doesn't wait for a pull.
+prepull:
+  enabled: true

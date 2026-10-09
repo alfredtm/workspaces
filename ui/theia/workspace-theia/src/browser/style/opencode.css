@@ -1,0 +1,307 @@
+/* ==== The OpenCode assistant card (browser/opencode/): the chat UI, on the editor's own theme variables ====
+   Built on workspace.css's --ws-* set, so Paper / Dark / Navy just work. Everything is scoped under .ws-oc / .oc-*. */
+.ws-oc {
+  --oc-font: Satoshi, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --oc-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --oc-ease: cubic-bezier(.22, 1, .36, 1);
+  --oc-spring: cubic-bezier(.34, 1.4, .64, 1);
+  /* OpenCode is purple (the editor's --ws-purple), Claude is Claude's orange (workspace.css .ws-claude-dot): the two
+     assistants never share a colour. --oc-accent is the gradient, --oc-accent-solid the flat colour for text/borders. */
+  --oc-accent: linear-gradient(135deg, #c084fc, #a855f7);
+  --oc-accent-solid: #a855f7;
+  --oc-accent-rgb: 168, 85, 247;
+  --oc-user-bubble: rgba(var(--oc-accent-rgb), .10);
+  --oc-user-border: rgba(var(--oc-accent-rgb), .28);
+  --oc-glow: rgba(var(--oc-accent-rgb), .30);
+  --oc-error-bg: rgba(255, 93, 93, .10); --oc-error-border: rgba(255, 93, 93, .30); --oc-error-text: #ff8a8a;
+  --oc-warn: #f5b544;
+  font: 13px/1.55 var(--oc-font); color: var(--ws-text); background: var(--ws-card);
+  display: flex; flex-direction: column; overflow: hidden;
+}
+body.ws-theme-light .ws-oc { --oc-error-bg: rgba(220, 38, 38, .08); --oc-error-border: rgba(220, 38, 38, .25); --oc-error-text: #b91c1c; --oc-warn: #b45309; }
+.ws-oc button { font-family: inherit; cursor: pointer; color: inherit; background: none; border: 0; }
+.ws-oc button:disabled { cursor: default; }
+.ws-oc kbd { font: 11px var(--oc-font); padding: 1px 5px; border-radius: 5px; border: 1px solid var(--ws-border); background: var(--ws-card); color: var(--ws-muted); }
+.ws-oc ::-webkit-scrollbar { width: 8px; height: 8px; } .ws-oc ::-webkit-scrollbar-track { background: transparent; }
+.ws-oc ::-webkit-scrollbar-thumb { background: var(--ws-border); border-radius: 999px; border: 2px solid transparent; background-clip: padding-box; }
+.ws-oc ::-webkit-scrollbar-thumb:hover { background: var(--ws-border-strong); background-clip: padding-box; }
+
+.oc-root { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.oc-shimmer { background: linear-gradient(90deg, var(--ws-muted) 0%, var(--ws-muted) 35%, var(--ws-text) 50%, var(--ws-muted) 65%, var(--ws-muted) 100%);
+  background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: oc-shimmer 2.2s linear infinite; }
+@keyframes oc-shimmer { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+.oc-spinner { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ws-border-strong); border-top-color: var(--ws-text); animation: oc-spin .8s linear infinite; flex: none; display: inline-block; }
+.oc-spinner--light { border-color: rgba(255,255,255,.35); border-top-color: #fff; }
+@keyframes oc-spin { to { transform: rotate(360deg); } }
+.oc-mark--ok { color: var(--ws-ok); } .oc-mark--err { color: var(--oc-error-text); }
+.oc-chev { color: var(--ws-faint); transition: transform .25s var(--oc-ease); flex: none; } .oc-chev.is-open { transform: rotate(90deg); }
+.oc-collapse { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s var(--oc-ease); }
+.oc-collapse.is-open { grid-template-rows: 1fr; } .oc-collapse-inner { overflow: hidden; min-height: 0; }
+@keyframes oc-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes oc-msg-in { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes oc-orb { to { transform: rotate(360deg); } }
+@keyframes oc-breathe { 0%, 100% { box-shadow: 0 0 0 0 var(--oc-glow); opacity: .85; } 50% { box-shadow: 0 0 18px 2px var(--oc-glow); opacity: 1; } }
+
+/* ---- title row (Claude parity: name left, history + new chat right, no second toolbar) ---- */
+.oc-head { position: relative; flex: none; display: flex; align-items: center; gap: 10px; height: 52px; padding: 0 14px 0 18px; }
+.oc-head-dot { width: 10px; height: 10px; border-radius: 999px; background: var(--oc-accent); flex: none; }
+.oc-head-title { font: 600 14px var(--oc-font); color: var(--ws-text); }
+.oc-head-actions { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+
+/* ── project tabs (opencode-widget.tsx renderTabs): quiet pills in the title row, a dot for what needs a look ── */
+.oc-tabs { flex: 1; min-width: 0; display: flex; align-items: center; gap: 2px; overflow-x: auto; scrollbar-width: none; margin-left: 4px; }
+.oc-tabs::-webkit-scrollbar { display: none; }
+.oc-tab { flex: none; display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 8px;
+  font: 500 13px var(--oc-font); color: var(--ws-faint); white-space: nowrap; transition: background .15s, color .15s; }
+.oc-tab:hover { background: var(--ws-hover); color: var(--ws-text); }
+.oc-tab.is-on { background: var(--ws-hover); color: var(--ws-text); }
+.oc-tab-label { max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.oc-tab-x { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-right: -4px; border-radius: 4px;
+  font-size: 13px; line-height: 1; color: var(--ws-faint); opacity: 0; transition: opacity .15s; }
+.oc-tab:hover .oc-tab-x, .oc-tab.is-on .oc-tab-x { opacity: 1; }
+.oc-tab-x:hover { background: var(--ws-border); color: var(--ws-text); }
+.oc-tab-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.oc-tab-dot--busy { background: var(--oc-accent); animation: oc-breathe 1.6s ease-in-out infinite; }
+.oc-tab-dot--needs { background: var(--oc-warn); }
+.oc-tab-dot--done { background: var(--ws-ok); }
+.oc-tab-add { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px;
+  font-size: 16px; line-height: 1; color: var(--ws-faint); }
+.oc-tab-add:hover, .oc-tab-add.is-on { background: var(--ws-hover); color: var(--ws-text); }
+.oc-menu--tabs { left: 12px; right: auto; min-width: 240px; }
+.oc-menu-note { padding: 8px 10px; max-width: 260px; color: var(--ws-muted); font: 12.5px/1.45 var(--oc-font); }
+.oc-newfolder { display: flex; gap: 6px; padding: 4px 8px 8px; }
+.oc-newfolder-input { flex: 1; min-width: 0; height: 28px; padding: 0 8px; border-radius: 6px; border: 1px solid var(--ws-border-strong);
+  background: var(--ws-card); color: var(--ws-text); font: 13px var(--oc-font); outline: none; }
+.oc-newfolder-input:focus { border-color: var(--oc-accent-solid); }
+.oc-newfolder-go { height: 28px; padding: 0 10px; border-radius: 6px; background: var(--oc-accent); color: #fff; font: 600 12px var(--oc-font); }
+.oc-newfolder-go:disabled { opacity: .4; }
+body.ws-mobile .oc-head { display: none; }
+.oc-tb-btn { display: inline-flex; align-items: center; justify-content: center; height: 28px; min-width: 28px; padding: 0 6px; border-radius: 8px; color: var(--ws-faint); transition: background .15s, color .15s; }
+.oc-tb-btn:hover, .oc-tb-btn.is-on { background: var(--ws-hover); color: var(--ws-text); }
+.oc-tb-btn:disabled { opacity: .35; }
+/* one reading column, centred like Claude's, for the chat and the composer alike */
+.oc-col { width: 100%; max-width: 720px; margin: 0 auto; }
+.oc-col--scroll { max-width: none; min-height: 100%; display: flex; flex-direction: column; }
+.oc-menu { position: absolute; top: 44px; right: 12px; z-index: 40; min-width: 240px; max-width: calc(100% - 20px); max-height: 60vh; overflow: auto; padding: 6px;
+  background: var(--ws-panel); border: 1px solid var(--ws-border); border-radius: 12px; box-shadow: 0 12px 40px var(--ws-shadow); animation: oc-rise .2s var(--oc-ease); }
+.oc-menu-cap { padding: 8px 10px 4px; font: 500 11px var(--oc-font); letter-spacing: .06em; text-transform: uppercase; color: var(--ws-faint); }
+.oc-menu-item { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; padding: 7px 28px 7px 10px; border-radius: 8px; color: var(--ws-text); }
+.oc-menu-item:hover { background: var(--ws-hover); } .oc-menu-item.is-on { background: var(--ws-selected); }
+.oc-menu-item.is-on::before { content: ""; position: absolute; left: 0; top: 9px; bottom: 9px; width: 2px; border-radius: 2px; background: var(--oc-accent); }
+.oc-menu-main { font-size: 13px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oc-menu-sub { font-size: 11.5px; color: var(--ws-faint); }
+.oc-menu-del { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; color: var(--ws-faint); font-size: 15px; opacity: 0; }
+.oc-menu-item:hover .oc-menu-del { opacity: 1; } .oc-menu-del:hover { background: var(--ws-card2); color: var(--ws-danger); }
+
+/* ---- the scroll + list ---- */
+.oc-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 18px 6px; scrollbar-gutter: stable; }
+.oc-scroll::-webkit-scrollbar-thumb { background: transparent; } .oc-scroll:hover::-webkit-scrollbar-thumb { background: var(--ws-border); background-clip: padding-box; }
+/* Chrome 121+ draws the standard scrollbar (a thick grey rail with "always show scroll bars" on macOS) as soon as
+   anything up the tree sets scrollbar-color/-width, and then ignores the ::-webkit-scrollbar rules above: set the
+   standard properties too — thin, and the thumb only on hover like before. */
+.oc-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.oc-scroll:hover { scrollbar-color: var(--ws-border) transparent; }
+.oc-list { display: flex; flex-direction: column; gap: 18px; padding-bottom: 8px; }
+.oc-tail { height: 4px; }
+.oc-footer { flex: none; padding: 6px 18px 16px; } .oc-footer .oc-col { display: flex; flex-direction: column; gap: 8px; }
+
+/* empty state: a small mark and one line, vertically centred (Claude parity) */
+.oc-hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px 12px 60px; }
+.oc-hero-mark { width: 30px; height: 30px; border-radius: 50%; background: conic-gradient(from 180deg, #c084fc, var(--oc-accent-solid), #ec4899, #c084fc); position: relative; margin-bottom: 18px; animation: oc-orb 10s linear infinite, oc-rise .6s var(--oc-ease) both; }
+.oc-hero-mark::after { content: ""; position: absolute; inset: 3px; border-radius: 50%; background: var(--ws-card); }
+.oc-hero-sub { color: var(--ws-muted); max-width: 300px; font-size: 13px; line-height: 1.5; animation: oc-rise .6s var(--oc-ease) 80ms both; }
+.oc-hero-orb { width: 48px; height: 48px; border-radius: 50%; background: conic-gradient(from 180deg, #c084fc, var(--oc-accent-solid), #ec4899, #c084fc); box-shadow: 0 8px 40px -6px var(--oc-glow);
+  animation: oc-orb 8s linear infinite, oc-rise .6s var(--oc-ease) both; margin-bottom: 20px; position: relative; }
+.oc-hero-orb::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--ws-card); opacity: .9; }
+.oc-hero-orb.is-still { animation: none; filter: grayscale(.7); }
+
+/* boot */
+.oc-boot { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+.oc-boot-title { font: 600 15px var(--oc-font); }
+.oc-boot-sub { margin-top: 6px; color: var(--ws-muted); font-size: 13px; max-width: 360px; }
+.oc-boot-sub code { font: 12px var(--oc-mono); background: var(--ws-card2); padding: 1px 6px; border-radius: 5px; }
+.oc-crash-actions { margin-top: 16px; display: flex; gap: 8px; }
+.oc-crash-actions button { padding: 8px 14px; cursor: pointer; font: 500 13px var(--oc-font); border-radius: var(--ws-r-btn); border: 1px solid var(--ws-border); background: var(--ws-card2); color: var(--ws-text); }
+.oc-crash-actions button.ws-primary { background: var(--ws-grad); border-color: transparent; color: var(--ws-btn-ink); }
+.oc-boot-log { margin-top: 16px; max-width: 100%; text-align: left; font: 11px/1.5 var(--oc-mono); color: var(--ws-faint); white-space: pre-wrap; word-break: break-word; background: var(--ws-card2); padding: 8px 10px; border-radius: 8px; max-height: 120px; overflow: auto; }
+
+/* ---- turns: the user's message as a quiet full-width box, the assistant as rows with a dot (Claude parity) ---- */
+.oc-turn { display: flex; flex-direction: column; gap: 10px; animation: oc-msg-in .32s var(--oc-ease) both; }
+.oc-turn--assistant { padding: 0 18px; }
+.oc-user { background: var(--ws-card2); border-radius: 10px; padding: 12px 16px; font-size: 13px; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.oc-row { display: flex; align-items: flex-start; gap: 12px; padding: 3px 0; }
+.oc-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; margin-top: 7px; background: var(--ws-border-strong); }
+.oc-dot--done { background: var(--ws-ok); }
+.oc-dot--run { background: var(--oc-accent); animation: oc-breathe 1.6s ease-in-out infinite; }
+.oc-dot--err { background: var(--oc-error-text); }
+.oc-row-body { flex: 1; min-width: 0; font-size: 13px; line-height: 1.55; }
+.oc-muted { color: var(--ws-muted); }
+/* tool rows: **Name** subject */
+.oc-tool-head { display: flex; align-items: baseline; gap: 10px; max-width: 100%; padding: 0; text-align: left; font-size: 13px; line-height: 1.55; color: var(--ws-text); }
+.oc-tool-head.is-clickable { cursor: pointer; } .oc-tool-head.is-clickable:hover .oc-tool-subject { color: var(--ws-text); }
+.oc-tool-name { font-weight: 600; flex: none; }
+.oc-tool-subject { color: var(--ws-muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: color .15s; }
+.oc-tool-subject.is-mono { font-family: var(--oc-mono); font-size: 12px; color: var(--ws-text); }
+.oc-tool-head .oc-chev { align-self: center; }
+/* bash: IN / OUT inline */
+.oc-io { margin-top: 8px; margin-bottom: 4px; border: 1px solid var(--ws-border); border-radius: 8px; background: var(--ws-bg); cursor: pointer; overflow: hidden; }
+.oc-io-line { display: flex; gap: 10px; padding: 9px 12px; }
+.oc-io-line + .oc-io-line { border-top: 1px solid var(--ws-border); }
+.oc-io-tag { flex: none; width: 28px; padding-top: 2px; font: 500 10.5px var(--oc-mono); letter-spacing: .05em; color: var(--ws-faint); }
+.oc-io-pre { flex: 1; min-width: 0; margin: 0; font: 12px/1.6 var(--oc-mono); color: var(--ws-text); white-space: pre-wrap; word-break: break-word; max-height: 420px; overflow: auto; }
+.oc-io-pre.is-clipped { max-height: 6.4em; overflow: hidden; -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+body.ws-theme-light .oc-io { background: var(--ws-card2); }
+/* prose rows (markdown) */
+.oc-bubble { overflow-wrap: anywhere; }
+.oc-bubble.is-streaming > :last-child::after { content: ""; display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--oc-accent); vertical-align: middle; animation: oc-caret 1s ease-in-out infinite; }
+@keyframes oc-caret { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
+.oc-bubble p { margin: 0; } .oc-bubble p + p, .oc-bubble p + ul, .oc-bubble p + ol, .oc-bubble ul + p, .oc-bubble ol + p, .oc-bubble pre + p { margin-top: 10px; }
+.oc-bubble code { font-family: var(--oc-mono); font-size: .9em; color: var(--ws-text); background: var(--ws-card2); padding: 2px 6px; border-radius: 5px; }
+.oc-bubble pre { font-family: var(--oc-mono); font-size: 12px; line-height: 1.6; background: var(--ws-bg); border: 1px solid var(--ws-border); padding: 12px 14px; border-radius: 8px; overflow-x: auto; margin: 10px 0; }
+body.ws-theme-light .oc-bubble pre { background: var(--ws-card2); }
+.oc-bubble pre code { background: none; padding: 0; font-size: inherit; }
+.oc-bubble ul, .oc-bubble ol { padding-left: 20px; margin: 8px 0; } .oc-bubble li + li { margin-top: 3px; }
+.oc-bubble a { color: var(--oc-accent-solid); text-decoration: underline; text-underline-offset: 2px; }
+.oc-bubble h1, .oc-bubble h2, .oc-bubble h3, .oc-bubble h4 { font-weight: 600; margin: 10px 0 4px; letter-spacing: -.01em; line-height: 1.3; }
+.oc-bubble h1 { font-size: 15px; } .oc-bubble h2 { font-size: 14px; } .oc-bubble h3, .oc-bubble h4 { font-size: 13px; }
+.oc-bubble strong { font-weight: 600; }
+.oc-bubble table { border-collapse: collapse; margin: 10px 0; font-size: 12.5px; } .oc-bubble th, .oc-bubble td { border: 1px solid var(--ws-border); padding: 4px 8px; text-align: left; }
+.oc-bubble blockquote { margin: 8px 0; padding: 2px 12px; border-left: 3px solid var(--ws-border-strong); color: var(--ws-muted); }
+.oc-bubble hr { border: 0; border-top: 1px solid var(--ws-border); margin: 12px 0; }
+/* the live thought */
+.oc-think-head { display: flex; align-items: center; gap: 10px; padding: 0; font-size: 13px; line-height: 1.55; color: var(--ws-muted); }
+.oc-think-head.is-clickable { cursor: pointer; }
+.oc-think-body { margin-top: 6px; max-height: 3.7em; overflow: hidden; -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 20px); mask-image: linear-gradient(180deg, transparent 0, #000 20px); transition: max-height .26s var(--oc-ease); display: flex; flex-direction: column; justify-content: flex-end; }
+.oc-think-body.is-open { max-height: 240px; overflow: auto; display: block; }
+.oc-think-text { margin: 0; font: italic 400 12px/1.5 var(--oc-font); color: var(--ws-faint); white-space: pre-wrap; word-break: break-word; }
+/* details opened under a read/edit row */
+.oc-tool-detail { margin: 8px 0 4px; padding: 9px 12px; background: var(--ws-bg); border: 1px solid var(--ws-border); border-radius: 8px; font: 12px/1.6 var(--oc-mono); color: var(--ws-muted); white-space: pre-wrap; overflow: auto; max-height: 320px; }
+body.ws-theme-light .oc-tool-detail { background: var(--ws-card2); }
+.oc-diff { line-height: 1.6; } .oc-diff-line { display: block; margin: 0 -14px; padding: 0 14px; }
+.oc-diff-line--add { background: rgba(63, 214, 143, .10); color: var(--ws-ok); } .oc-diff-line--del { background: var(--oc-error-bg); color: var(--oc-error-text); } .oc-diff-line--hunk { color: var(--ws-faint); }
+
+/* permission */
+.oc-perm { padding: 13px 14px 14px; border: 1px solid var(--oc-user-border); border-radius: 12px; background: var(--ws-card2); display: flex; flex-direction: column; gap: 8px; animation: oc-msg-in .32s var(--oc-ease) both; box-shadow: 0 8px 30px -16px var(--oc-glow); }
+.oc-perm.is-resolved { border-color: var(--ws-border); box-shadow: none; }
+.oc-perm-head { display: flex; align-items: center; gap: 7px; }
+.oc-perm-icon { width: 20px; height: 20px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; background: rgba(var(--oc-accent-rgb), .15); color: var(--oc-accent-solid); }
+.oc-perm-eyebrow { font: 600 11px var(--oc-font); letter-spacing: .05em; text-transform: uppercase; color: var(--oc-accent-solid); }
+.oc-perm-title { font-size: 13px; line-height: 1.5; } .oc-perm-title code { display: block; margin-top: 4px; font: 11.5px/1.55 var(--oc-mono); background: var(--ws-bg); padding: 4px 8px; border-radius: 6px; white-space: pre-wrap; word-break: break-all; }
+.oc-perm-note { font-size: 12px; color: var(--ws-faint); }
+.oc-perm-buttons { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.oc-perm-resolved { font-size: 12.5px; color: var(--ws-faint); } .oc-perm-resolved.is-allowed::before { content: "✓ "; color: var(--ws-ok); }
+/* Claude-style ask: question, the command, the model's description, numbered options, an "instead" box. */
+.oc-perm { border-color: var(--oc-accent); gap: 10px; }
+.oc-perm.is-resolved { border-color: var(--ws-border); }
+.oc-perm-question { font: 600 13.5px/1.4 var(--oc-font); color: var(--ws-text); }
+.oc-perm-cmd { margin: 0; font: 12px/1.55 var(--oc-mono); color: var(--ws-text); white-space: pre-wrap; word-break: break-all; }
+.oc-perm-desc { font-size: 12.5px; color: var(--ws-muted); }
+.oc-perm-options { display: flex; flex-direction: column; gap: 5px; margin-top: 2px; }
+.oc-perm-option { display: flex; align-items: flex-start; gap: 10px; padding: 8px 12px; border: 1px solid var(--ws-border); border-radius: 8px; background: var(--ws-card); color: var(--ws-text); font: 13px/1.4 var(--oc-font); text-align: left; transition: background .15s, border-color .15s; }
+.oc-perm-option:hover { background: var(--ws-hover); border-color: var(--ws-border-strong); }
+.oc-perm-option.is-primary { background: var(--oc-accent); border-color: var(--oc-accent); color: #fff; font-weight: 600; }
+.oc-perm-option.is-primary:hover { filter: brightness(1.06); }
+.oc-perm-option code { font: 12px var(--oc-mono); padding: 0 4px; border-radius: 4px; background: rgba(var(--oc-accent-rgb), .12); }
+.oc-perm-num { flex: none; width: 1.1em; opacity: .7; font-variant-numeric: tabular-nums; }
+.oc-perm-dim { color: var(--ws-muted); font-weight: 400; } .oc-perm-option.is-primary .oc-perm-dim { color: rgba(255,255,255,.75); }
+.oc-perm-instead { width: 100%; padding: 8px 12px; border: 1px solid var(--ws-border); border-radius: 8px; background: var(--ws-card); color: var(--ws-text); font: 13px var(--oc-font); outline: none; }
+.oc-perm-instead:focus { border-color: var(--oc-accent); }
+.oc-perm-foot { font-size: 11.5px; color: var(--ws-faint); }
+.oc-btn { padding: 7px 14px; border-radius: 9px; font: 600 12.5px var(--oc-font); transition: transform .2s var(--oc-spring), background .15s, color .15s; }
+.oc-btn:active { transform: scale(.97); }
+.oc-btn--primary { background: var(--oc-accent); color: #fff; } .oc-btn--ghost { border: 1px solid var(--ws-border-strong); color: var(--ws-text); } .oc-btn--ghost:hover { background: var(--ws-hover); }
+.oc-btn--text { color: var(--ws-muted); } .oc-btn--text:hover { color: var(--ws-text); }
+
+/* question */
+.oc-question { padding: 13px 14px; border: 1px solid var(--ws-border); border-radius: 12px; background: var(--ws-card2); animation: oc-msg-in .32s var(--oc-ease) both; }
+.oc-question.is-resolved { opacity: .92; }
+.oc-question-one + .oc-question-one { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--ws-border); }
+.oc-question-custom { width: 100%; padding: 9px 12px; border: 1px solid var(--ws-border); border-radius: 9px; background: var(--ws-card); color: var(--ws-text); font: 13px var(--oc-font); outline: none; }
+.oc-question-custom:focus { border-color: var(--oc-user-border); }
+.oc-question-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.oc-question-resolved { margin-top: 10px; font-size: 12.5px; color: var(--ws-faint); }
+.oc-btn:disabled { opacity: .45; }
+.oc-question.is-loading { display: flex; align-items: center; gap: 9px; font-size: 13px; }
+.oc-question-eyebrow { font: 600 11px var(--oc-font); letter-spacing: .05em; text-transform: uppercase; color: var(--ws-faint); margin-bottom: 4px; }
+.oc-question-text { font-size: 13px; line-height: 1.5; margin-bottom: 10px; }
+.oc-question-option.is-picked .oc-question-desc { color: var(--ws-muted); }
+.oc-question-options { display: flex; flex-direction: column; gap: 6px; }
+.oc-question-option { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 9px 36px 9px 12px; border: 1px solid var(--ws-border); border-radius: 9px; background: var(--ws-card); font-size: 12.5px; text-align: left;
+  transition: border-color .2s, background .2s, opacity .3s, transform .2s var(--oc-spring); animation: oc-rise .4s var(--oc-ease) both; animation-delay: calc(var(--i) * 50ms); }
+.oc-question-option:hover:not(:disabled) { border-color: var(--oc-user-border); background: var(--ws-hover); transform: translateX(2px); }
+.oc-question-option.is-picked { border-color: var(--oc-accent-solid); background: rgba(var(--oc-accent-rgb), .12); } .oc-question-option.is-dim { opacity: .45; }
+.oc-question-label { font-weight: 500; } .oc-question-desc { font-size: 12px; color: var(--ws-muted); }
+.oc-question-check { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--oc-accent-solid); }
+
+/* errors */
+.oc-error-text { color: var(--oc-error-text); } .oc-error-text.is-soft { color: var(--ws-faint); }
+.oc-error { display: flex; align-items: center; gap: 9px; padding: 8px 12px; border: 1px solid var(--oc-error-border); border-radius: 10px; background: var(--oc-error-bg); color: var(--oc-error-text); font-size: 13px; }
+.oc-error .oc-error-text { flex: 1; overflow-wrap: anywhere; }
+.oc-stream-warn { font-size: 12px; color: var(--oc-warn); padding: 0 4px; }
+
+/* the / palette above the input */
+.oc-palette { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 30; max-height: 280px; overflow: auto; padding: 6px; background: var(--ws-panel); border: 1px solid var(--ws-border); border-radius: 12px; box-shadow: 0 12px 40px var(--ws-shadow); animation: oc-rise .15s var(--oc-ease); }
+.oc-palette-item { display: flex; align-items: baseline; gap: 12px; width: 100%; text-align: left; padding: 7px 10px; border-radius: 8px; color: var(--ws-text); }
+.oc-palette-item:hover, .oc-palette-item.is-on { background: var(--ws-hover); }
+.oc-palette-name { flex: none; font: 500 12.5px var(--oc-mono); } .oc-palette-args { color: var(--ws-faint); font-weight: 400; }
+.oc-palette-desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--ws-muted); }
+.oc-slash-btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; color: var(--ws-faint); transition: background .15s, color .15s; }
+.oc-slash-btn:hover { background: var(--ws-hover); color: var(--ws-text); }
+.oc-note .oc-bubble { color: var(--ws-muted); } .oc-note .oc-bubble strong { color: var(--ws-text); }
+/* queued follow-up + composer */
+.oc-queued { display: flex; align-items: center; gap: 8px; padding: 7px 10px 7px 12px; border-radius: 10px; background: var(--ws-card2); border: 1px dashed var(--ws-border-strong); font-size: 12.5px; color: var(--ws-muted); animation: oc-rise .3s var(--oc-ease); }
+.oc-queued-label { font-weight: 600; color: var(--oc-accent-solid); flex: none; } .oc-queued-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ws-text); }
+.oc-queued-cancel { width: 22px; height: 22px; border-radius: 50%; color: var(--ws-faint); font-size: 15px; line-height: 1; } .oc-queued-cancel:hover { background: var(--ws-hover); color: var(--ws-text); }
+/* several follow-ups stack with a little air; "Send now" (Pi) is a quiet text button */
+.oc-queued + .oc-queued { margin-top: 6px; }
+.oc-queued-now { flex: none; padding: 2px 8px; border-radius: 999px; font: 500 12px var(--oc-font); color: var(--ws-text); background: var(--ws-hover); }
+.oc-queued-now:hover { background: rgba(var(--ws-accent-rgb), .18); }
+.oc-compaction-summary { margin-top: 8px; font-size: 12.5px; }
+.oc-composer { position: relative; display: flex; flex-direction: column; border: 1px solid var(--ws-border); background: var(--ws-card2); border-radius: 14px; padding: 12px 10px 10px 14px; transition: border-color .2s, box-shadow .3s var(--oc-ease); }
+.oc-composer.is-focused { border-color: var(--oc-user-border); box-shadow: 0 0 0 4px rgba(var(--oc-accent-rgb), .10); }
+.oc-composer.is-disabled { opacity: .7; }
+.oc-input { width: 100%; resize: none; border: 0; background: none; color: var(--ws-text); font: 13.5px/1.55 var(--oc-font); outline: none; max-height: 180px; padding: 2px 0; }
+.oc-input:focus, .oc-input:focus-visible, .ws-oc textarea.oc-input:focus { outline: none !important; box-shadow: none !important; border: 0 !important; }   /* Theia paints a focusBorder outline on every textarea */
+.oc-input::placeholder { color: var(--ws-faint); }
+.oc-composer-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+.oc-composer-lead { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.oc-composer-hint { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ws-faint); white-space: nowrap; }
+.oc-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--oc-accent); animation: oc-breathe 1.4s ease-in-out infinite; }
+/* "✻ Cogitating…" while OpenCode works: the asterisk turns and breathes, the word swaps every few seconds. */
+.oc-busy { color: var(--ws-muted); gap: 7px; }
+.oc-busy-glyph { display: inline-block; color: var(--oc-accent); font-size: 14px; line-height: 1; animation: oc-busy-turn 2.4s ease-in-out infinite; }
+.oc-busy-word { display: inline-block; animation: oc-word-in .35s ease both; }
+@keyframes oc-busy-turn { 0% { transform: rotate(0) scale(1); opacity: .75; } 50% { transform: rotate(180deg) scale(1.15); opacity: 1; } 100% { transform: rotate(360deg) scale(1); opacity: .75; } }
+@keyframes oc-word-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+.oc-model-wrap { position: relative; }
+.oc-model-pill { display: inline-flex; align-items: center; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--ws-card); color: var(--ws-text); font: 500 12px var(--oc-font); max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: background .15s; }
+.oc-model-pill:hover, .oc-model-pill.is-on { background: var(--ws-hover); }
+/* Thinking: High / Max are slower — tinted, so a slow setting never goes unnoticed */
+.oc-effort-pill.is-deep { background: rgba(var(--ws-accent-rgb), .18); }
+/* Build | Plan: a two-way switch next to the model pill; Plan is tinted so a read-only turn is never a surprise */
+.oc-mode { display: inline-flex; height: 24px; padding: 2px; border-radius: 999px; background: var(--ws-card); gap: 2px; }
+.oc-mode button { height: 20px; padding: 0 10px; border-radius: 999px; font: 500 12px var(--oc-font); color: var(--ws-faint); transition: background .15s, color .15s; }
+.oc-mode button:hover { color: var(--ws-text); }
+.oc-mode button.is-on { background: var(--ws-hover); color: var(--ws-text); }
+.oc-mode button.is-on:last-child { background: rgba(var(--ws-accent-rgb), .18); color: var(--ws-text); }
+/* images: the attach button, the tray above the input, thumbnails in the user's turn */
+.oc-iconbtn--attach { color: var(--ws-faint); }
+.oc-iconbtn--attach:hover { background: var(--ws-hover); color: var(--ws-text); }
+.oc-iconbtn--attach.is-off { opacity: .5; }
+.oc-composer.is-dragging { box-shadow: inset 0 0 0 2px rgba(var(--ws-accent-rgb), .5); }
+.oc-attachments { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px 0; }
+.oc-attachment { position: relative; width: 56px; height: 56px; border-radius: 8px; overflow: hidden; background: var(--ws-card2); }
+.oc-attachment img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.oc-attachment-x { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 999px; background: rgba(0,0,0,.6); color: #fff; font-size: 12px; line-height: 18px; text-align: center; opacity: 0; transition: opacity .15s; }
+.oc-attachment:hover .oc-attachment-x, .oc-attachment-x:focus-visible { opacity: 1; }
+.oc-attach-hint { font-size: 12px; color: var(--ws-muted); max-width: 260px; }
+.oc-user-images { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.oc-user-images img { max-width: 160px; max-height: 120px; border-radius: 8px; display: block; object-fit: cover; }
+.oc-menu--models { top: auto; bottom: calc(100% + 8px); left: 0; right: auto; }
+.oc-composer-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.oc-iconbtn { width: 28px; height: 28px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; transition: background .15s, color .15s, border-color .15s, transform .2s var(--oc-spring); }
+.oc-iconbtn:active { transform: scale(.94); }
+.oc-iconbtn--send { border: 1px solid var(--ws-border-strong); background: transparent; color: var(--ws-faint); }
+.oc-iconbtn--send.is-ready { background: var(--oc-accent); border-color: transparent; color: #fff; }
+.oc-iconbtn--send:disabled:not(.is-ready) { opacity: .6; }
+.oc-iconbtn--stop { background: var(--ws-card); color: var(--ws-text); } .oc-iconbtn--stop:hover { background: var(--oc-error-bg); color: var(--oc-error-text); }
