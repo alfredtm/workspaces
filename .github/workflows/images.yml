@@ -67,7 +67,7 @@ jobs:
           cache-dependency-path: services/${{ matrix.component }}/go.mod
       # The manager embeds the portal (go:embed uidist): build it first.
       - if: matrix.component == 'manager'
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
@@ -105,7 +105,7 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost \
             /opt/hostedtoolcache/CodeQL "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}/Python" 2>/dev/null || true
           sudo docker image prune -af >/dev/null 2>&1 || true
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
@@ -118,7 +118,7 @@ jobs:
           TAGS: ${{ needs.tags.outputs.list }}
         run: |
           { echo 'tags<<EOF'; for t in $TAGS; do echo "$REGISTRY/base:$t"; done; echo EOF; } >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: images/workspace/base
           push: true
@@ -139,14 +139,14 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # Theia's native modules are built for Node 20, which ships in the tarball.
           node-version: 20
           cache: npm
           cache-dependency-path: ui/theia/package-lock.json
       - run: images/workspace/build-theia.sh
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: theia-image
           path: ui/theia/dist-image/theia.tar.gz
@@ -167,13 +167,13 @@ jobs:
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/share/boost \
             /opt/hostedtoolcache/CodeQL "${AGENT_TOOLSDIRECTORY:-/opt/hostedtoolcache}/Python" 2>/dev/null || true
           sudo docker image prune -af >/dev/null 2>&1 || true
-      - uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: theia-image
           path: ui/theia/dist-image
@@ -182,7 +182,7 @@ jobs:
           TAGS: ${{ needs.tags.outputs.list }}
         run: |
           { echo 'tags<<EOF'; for t in $TAGS; do echo "$REGISTRY:$t"; done; echo EOF; } >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
           file: images/workspace/Dockerfile
