@@ -65,7 +65,7 @@ RUN userdel -r ubuntu 2>/dev/null || true && \
 # ============================================================
 # Go
 # ============================================================
-ARG GO_VERSION=1.26.9
+ARG GO_VERSION=1.26.10
 RUN wget -qO- "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz" \
     | tar -C /usr/local -xzf -
 ENV PATH="/usr/local/go/bin:/home/dev/go/bin:${PATH}"
