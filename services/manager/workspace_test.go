@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,8 +34,10 @@ func TestCreateWorkspace(t *testing.T) {
 	sess := &session{userUPN: "alice@example.com"}
 	ctx := context.Background()
 
-	if err := c.createWorkspace(ctx, sess, createOpts{slug: "api", explicitName: true, postgres: true}); err != nil {
+	if name, err := c.createWorkspace(ctx, sess, createOpts{slug: "api", explicitName: true, postgres: true}); err != nil {
 		t.Fatalf("createWorkspace: %v", err)
+	} else if name != "ws-alice-api" {
+		t.Errorf("createWorkspace returned %q, want ws-alice-api", name)
 	}
 	dep, err := c.k8s.AppsV1().Deployments(testNamespace).Get(ctx, "ws-alice-api", metav1.GetOptions{})
 	if err != nil {
@@ -110,8 +113,15 @@ func TestCreateWorkspace(t *testing.T) {
 	}
 
 	// The same explicit name twice is an error, not a silent rename.
-	if err := c.createWorkspace(ctx, sess, createOpts{slug: "api", explicitName: true}); err == nil {
-		t.Error("duplicate explicit name must fail")
+	if _, err := c.createWorkspace(ctx, sess, createOpts{slug: "api", explicitName: true}); !errors.Is(err, errWorkspaceExists) {
+		t.Errorf("duplicate explicit name: err = %v, want errWorkspaceExists", err)
+	}
+
+	// A name derived from a repo gets the next free suffix, and the caller
+	// learns the real name.
+	name, err := c.createWorkspace(ctx, sess, createOpts{slug: "api"})
+	if err != nil || name != "ws-alice-api-2" {
+		t.Errorf("derived duplicate: name=%q err=%v, want ws-alice-api-2", name, err)
 	}
 }
 
@@ -119,7 +129,7 @@ func TestCreateWorkspace(t *testing.T) {
 func TestCreateWorkspaceNameTooLong(t *testing.T) {
 	c := testCreateConfig(t)
 	sess := &session{userUPN: "a-rather-long-user-name-here-xyz@example.com"}
-	err := c.createWorkspace(context.Background(), sess, createOpts{slug: "a-fairly-long-slug-too-abcdefgh", explicitName: true})
+	_, err := c.createWorkspace(context.Background(), sess, createOpts{slug: "a-fairly-long-slug-too-abcdefgh", explicitName: true})
 	if err != errNameTooLong {
 		t.Errorf("err = %v, want errNameTooLong", err)
 	}

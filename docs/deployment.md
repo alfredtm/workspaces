@@ -135,12 +135,33 @@ every node, so starts take seconds instead of minutes.
 
 `helm upgrade` rolls the manager and the router. Running workspaces keep
 their pod until they stop. They pick up a new image the next time they
-start, because workspace pods always pull. After publishing a new workspace
-image, refresh node caches:
+start, as long as the workspace image uses the `latest` tag: Kubernetes
+pulls `latest` every time and caches any other tag. After publishing a new
+workspace image, refresh node caches:
 
 ```sh
 kubectl -n workspaces rollout restart ds/workspace-prepull
 ```
+
+## Image architecture and local images
+
+The published images are `linux/amd64` only. On an ARM cluster (including
+kind or colima on an Apple Silicon Mac) the workspace image runs under
+emulation if the node has it, and is slow to start. Build your own for ARM
+(see below).
+
+To use images from a local registry, or loaded straight into a node (for
+example with `kind load docker-image`), give them a tag other than `latest`.
+Kubernetes pulls `latest` even when the image is already on the node, and
+the pull fails if the image isn't in a registry:
+
+```yaml
+image:
+  registry: registry.example.com/workspaces
+  tag: v0.1.1
+```
+
+Or set `manager.image`, `portRouter.image` and `workspace.image` one by one.
 
 ## Building your own images
 

@@ -734,9 +734,15 @@ type createOpts struct {
 	postgres     bool
 }
 
-var errNameTooLong = errors.New("workspace hostname would exceed the DNS label limit — pick a shorter name")
+var (
+	errNameTooLong     = errors.New("workspace hostname would exceed the DNS label limit — pick a shorter name")
+	errWorkspaceExists = errors.New("workspace already exists")
+)
 
-func (c *config) createWorkspace(ctx context.Context, sess *session, opts createOpts) error {
+// createWorkspace returns the name of the Deployment it created ("ws-<user>-<slug>").
+// That can differ from opts.slug when a repo-derived name is truncated or
+// gets a numeric suffix.
+func (c *config) createWorkspace(ctx context.Context, sess *session, opts createOpts) (string, error) {
 	username := sess.username()
 	ns := c.namespace
 
@@ -748,13 +754,13 @@ func (c *config) createWorkspace(ctx context.Context, sess *session, opts create
 	// The port-forward hostname "<port>--<user>-<slug>" must also fit a
 	// 63-char DNS label; reserve 7 for "65535--".
 	if len(username)+1+len(opts.slug) > 56 {
-		return errNameTooLong
+		return "", errNameTooLong
 	}
 
 	wsName := "ws-" + username + "-" + opts.slug
 	if _, err := c.k8s.AppsV1().Deployments(ns).Get(ctx, wsName, metav1.GetOptions{}); err == nil {
 		if opts.explicitName {
-			return fmt.Errorf("workspace %q already exists", opts.slug)
+			return "", fmt.Errorf("%w: %q", errWorkspaceExists, opts.slug)
 		}
 		// Derived from a repo name: pick the next free numeric suffix.
 		found := false
@@ -769,7 +775,7 @@ func (c *config) createWorkspace(ctx context.Context, sess *session, opts create
 			}
 		}
 		if !found {
-			return fmt.Errorf("workspace %q already exists — pick a name yourself", opts.slug)
+			return "", fmt.Errorf("%w: %q — pick a name yourself", errWorkspaceExists, opts.slug)
 		}
 	}
 
@@ -808,7 +814,7 @@ func (c *config) createWorkspace(ctx context.Context, sess *session, opts create
 	}
 	if _, err := c.k8s.CoreV1().PersistentVolumeClaims(ns).Create(ctx, pvc, metav1.CreateOptions{}); err != nil {
 		if !isAlreadyExists(err) {
-			return fmt.Errorf("create pvc: %w", err)
+			return "", fmt.Errorf("create pvc: %w", err)
 		}
 	}
 
@@ -930,7 +936,7 @@ func (c *config) createWorkspace(ctx context.Context, sess *session, opts create
 	}
 	if _, err := c.k8s.AppsV1().Deployments(ns).Create(ctx, dep, metav1.CreateOptions{}); err != nil {
 		if !isAlreadyExists(err) {
-			return fmt.Errorf("create deployment: %w", err)
+			return "", fmt.Errorf("create deployment: %w", err)
 		}
 	}
 
@@ -952,12 +958,12 @@ func (c *config) createWorkspace(ctx context.Context, sess *session, opts create
 	}
 	if _, err := c.k8s.CoreV1().Services(ns).Create(ctx, svc, metav1.CreateOptions{}); err != nil {
 		if !isAlreadyExists(err) {
-			return fmt.Errorf("create service: %w", err)
+			return "", fmt.Errorf("create service: %w", err)
 		}
 	}
 
 	slog.Info("workspace created", "namespace", logSafe(ns), "name", logSafe(wsName), "user", logSafe(sess.userUPN), "slug", logSafe(opts.slug), "repo", logSafe(opts.repoURL), "postgres", opts.postgres)
-	return nil
+	return wsName, nil
 }
 
 // workspaceStorageSize is the PVC request; the zero value (tests that build

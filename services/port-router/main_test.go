@@ -58,6 +58,34 @@ func TestPublicHostIs404(t *testing.T) {
 	}
 }
 
+type failingTransport struct{ err error }
+
+func (f failingTransport) RoundTrip(*http.Request) (*http.Response, error) { return nil, f.err }
+
+// A host that looks like a workspace but has no Service is a 404; any other
+// upstream failure (a stopped workspace refuses connections) stays a 502.
+func TestUnknownWorkspaceIs404(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		err  error
+		want int
+	}{
+		{"no such service", &net.DNSError{Err: "no such host", IsNotFound: true}, http.StatusNotFound},
+		{"connection refused", &net.OpError{Op: "dial", Err: io.ErrClosedPipe}, http.StatusBadGateway},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := newRouter("workspaces", "workspaces.example.com", "")
+			rt.transport = failingTransport{tc.err}
+			req := httptest.NewRequest("GET", "http://nobody-nothing.example.com/", nil)
+			rec := httptest.NewRecorder()
+			rt.ServeHTTP(rec, req)
+			if rec.Code != tc.want {
+				t.Errorf("status %d, want %d", rec.Code, tc.want)
+			}
+		})
+	}
+}
+
 // The proxy must preserve the Host header, pass WebSocket upgrades through
 // and flush streamed bodies as they are written. Every workspace Service
 // "resolves" to a local test upstream through a swapped transport.
