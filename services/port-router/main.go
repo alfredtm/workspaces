@@ -30,7 +30,9 @@
 package main
 
 import (
+	"errors"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -120,6 +122,13 @@ func (rt *router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// (WebSockets) are spliced through by ReverseProxy on its own.
 		FlushInterval: -1,
 		ErrorHandler: func(w http.ResponseWriter, _ *http.Request, err error) {
+			// No such Service: nobody has a workspace by this name. A
+			// stopped workspace keeps its Service, so it stays a 502.
+			var dnsErr *net.DNSError
+			if errors.As(err, &dnsErr) && dnsErr.IsNotFound {
+				http.NotFound(w, r)
+				return
+			}
 			slog.Warn("upstream unreachable", "service", service, "namespace", rt.namespace, "err", err)
 			http.Error(w, "workspace not reachable", http.StatusBadGateway)
 		},
