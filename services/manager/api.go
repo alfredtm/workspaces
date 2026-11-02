@@ -184,16 +184,22 @@ func (c *config) createWorkspaceAPIHandler(w http.ResponseWriter, r *http.Reques
 		writeJSONError(w, http.StatusConflict, fmt.Sprintf("active workspace limit (%d) reached — pause a workspace first", c.activeLimit))
 		return
 	}
-	if err := c.createWorkspace(ctx, sess, opts); err != nil {
+	wsName, err := c.createWorkspace(ctx, sess, opts)
+	if err != nil {
 		if errors.Is(err, errNameTooLong) {
 			writeJSONError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, errWorkspaceExists) {
+			writeJSONError(w, http.StatusConflict, err.Error())
 			return
 		}
 		slog.Error("create workspace", "err", err, "user", logSafe(sess.userUPN), "slug", logSafe(opts.slug))
 		writeJSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	writeJSON(w, http.StatusCreated, map[string]string{"name": opts.slug})
+	// Same shape as the list: "name" is what start, stop and delete take.
+	writeJSON(w, http.StatusCreated, map[string]string{"name": wsName, "slug": strings.TrimPrefix(wsName, "ws-"+sess.username()+"-")})
 }
 
 // scaleWorkspaceAPIHandler backs both start (replicas=1, with limit check)
