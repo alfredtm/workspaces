@@ -128,6 +128,11 @@ Ports taken inside every pod:
 
 User apps get `PORT=3000` and can use any other port.
 
+HTML pages served through a forwarded port get a thin banner on top, "Dev
+workspace · only accessible to you · not a deployment", so nobody mistakes a
+preview for something published. It has a close button that hides it until
+the next reload. Other content types pass through untouched.
+
 ## Idle workspaces
 
 - **Stopping:** a workspace idle for `IDLE_TIMEOUT` (default 30 minutes) is
